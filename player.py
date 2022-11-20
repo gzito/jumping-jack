@@ -1,4 +1,4 @@
-from game import Game, spawn_random_hole
+from game import Game
 from game_objects import *
 from globals import *
 from screen_flash import ScreenFlash
@@ -9,12 +9,9 @@ class Player(ZSprite):
         # chiama init della classe padre (ZSprite)
         super().__init__()
         self.state = HidleState()
-        # self.next_jump_y = 490 - SCALED_PLAYER_HEIGHT + 2
-        # self.next_fallen_y = 550 - SCALED_PLAYER_HEIGHT + 2
         self.next_jump_y = 0
         self.next_fallen_y = 0
-
-        self.linea_sopra = 7
+        self.line_idx = 7
 
     def update(self, *args, **kwargs):
         self.state.handle_input(self)
@@ -40,20 +37,18 @@ class Player(ZSprite):
     def has_hole_up(self):
         tollerance = 10
 
-        for hole in hole_list:
+        for hole in Game.instance().hole_list:
             rect = hole.rect
             if abs(self.rect.y - rect.bottom) <= 20:
                 if self.rect.x >= (rect.x - tollerance) and self.rect.right <= (rect.right + tollerance):
-                    # print('has_hole_up')
                     return True
         return False
 
     def has_hole_down(self):
-        for hole in hole_list:
+        for hole in Game.instance().hole_list:
             rect = hole.rect
             if abs(self.rect.bottom - rect.y) <= 1:
                 if self.rect.x > rect.x and self.rect.right < rect.right:
-                    # print('has_hole_down=true')
                     return True
         return False
 
@@ -107,12 +102,12 @@ class WalkingState(PlayerState):
         key = pygame.key.get_pressed()
         if key[pygame.K_LEFT]:
             player.move(-PLAYER_SPEED, 0)
-            if player.get_x() < 0 - SCALED_PLAYER_WIDTH:
-                player.set_x(800 + SCALED_PLAYER_WIDTH)
+            if player.get_x() < L_SCREEN_EDGE:
+                player.set_x(R_SCREEN_EDGE - SCALED_PLAYER_WIDTH)
         elif key[pygame.K_RIGHT]:
             player.move(PLAYER_SPEED, 0)
-            if player.get_x() > 800:
-                player.set_x(0)
+            if player.get_x() > R_SCREEN_EDGE - SCALED_PLAYER_WIDTH:
+                player.set_x(L_SCREEN_EDGE)
         else:
             player.change_state(HidleState())
 
@@ -143,14 +138,14 @@ class JumpingState(PlayerState):
             if player.y <= player.next_jump_y:
                 player.y = player.next_jump_y
                 player.next_jump_y = player.y - 60
-                player.linea_sopra = player.linea_sopra - 1
+                player.line_idx = player.line_idx - 1
                 player.change_state(HidleState())
-                grp = Game.get_instance().get_group()
-                spawn_random_hole(grp)
-                Game.get_instance().score = Game.instance.score + 5
+                grp = Game.instance().sprite_group[GROUP_BCKGRND]
+                Game.instance().spawn_random_hole(grp)
+                Game.instance().score = Game.instance().score + 5
         else:
-            if player.y <= line_list[player.linea_sopra].rect.y:
-                player.y = line_list[player.linea_sopra].rect.y
+            if player.y <= Game.instance().line_list[player.line_idx].rect.y:
+                player.y = Game.instance().line_list[player.line_idx].rect.y
                 player.change_state(ElectricfiedState())
 
 
@@ -166,14 +161,14 @@ class FallingState(PlayerState):
         if player.y >= player.next_fallen_y:
             player.y = player.next_fallen_y
             player.next_fallen_y = player.y + 60
-            player.linea_sopra = player.linea_sopra + 1
+            player.line_idx = player.line_idx + 1
             player.change_state(StunnedState())
 
 
 class ElectricfiedState(PlayerState):
     def __init__(self):
         super().__init__()
-        self.flash = ScreenFlash(Game.get_instance().background_color, (255, 255, 255), 100, 3)
+        self.flash = ScreenFlash(Game.instance().bg_color, (255, 255, 255), 250, 3)
 
     def enter(self, player):
         player.set_animation(player.animations["electrified"])

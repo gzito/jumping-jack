@@ -5,7 +5,7 @@ import random
 import pygame
 from pygame.font import Font
 
-from game import Game, spawn_hole
+from game import Game
 from globals import *
 
 from player import *
@@ -95,47 +95,50 @@ player.set_animation(hidle_anim)
 player.set_position(383, 550 - SCALED_PLAYER_HEIGHT + 1)  # posizione iniziale
 
 # crea gruppo di sprite
-grp = pygame.sprite.Group()
-Game.get_instance().set_group(grp)
+Game.instance().sprite_group[GROUP_BCKGRND] = pygame.sprite.Group()
+Game.instance().sprite_group[GROUP_ENEMIES] = pygame.sprite.Group()
+Game.instance().sprite_group[GROUP_PLAYER] = pygame.sprite.Group()
 
 # lines
 for i in range(0, 8):
     print(f'linea {i}: {70 + i * SPAZIO_TRA_LINEE}')
-    linea = Line(0, 70 + i * SPAZIO_TRA_LINEE)
-    line_list.append(linea)
-    grp.add(linea)
+    linea = Line(L_SCREEN_EDGE, 70 + i * SPAZIO_TRA_LINEE)
+    Game.instance().line_list.append(linea)
+    Game.instance().sprite_group[GROUP_BCKGRND].add(linea)
 
 # spawns 2 holes
-spawn_hole(400, 130, HOLES_SPEED, grp)
-spawn_hole(400, 130, -HOLES_SPEED, grp)
+Game.instance().spawn_hole(400, 130, HOLES_SPEED, Game.instance().sprite_group[GROUP_BCKGRND])
+Game.instance().spawn_hole(400, 130, -HOLES_SPEED, Game.instance().sprite_group[GROUP_BCKGRND])
 
-grp.add(player)
+Game.instance().sprite_group[GROUP_PLAYER].add(player)
 
-game = Game.get_instance()
-game.background_color = BACKGROUND_COLOR
+game = Game.instance()
+game.bg_color = BACKGROUND_COLOR
 
 run = True
 while run:
-
     clock.tick(FPS)
 
-    # key = pygame.key.get_pressed()
-
     # disegna sfondo
-    # screen.blit(bg_img, (0, 0))
-    screen.fill(game.background_color)
+    screen.fill(game.bg_color)
 
-    # disegna il gruppo di sprite
-    grp.draw(screen)
+    # draw score
+    font_surface = font.render(f"SC{Game.instance().score:05d}", False, (162, 27, 159))
+    screen.blit(font_surface, (600, 510))
+
+    # update sprites
+    dt = clock.get_time() / 1000
+    Game.instance().sprite_group[GROUP_BCKGRND].update(dt)
+    Game.instance().sprite_group[GROUP_ENEMIES].update(dt)
+    Game.instance().sprite_group[GROUP_PLAYER].update(dt)
+
+    # disegna i gruppo di sprite
+    Game.instance().sprite_group[GROUP_BCKGRND].draw(screen)
+    Game.instance().sprite_group[GROUP_ENEMIES].draw(screen)
+    Game.instance().sprite_group[GROUP_PLAYER].draw(screen)
 
     # draw debug rect
     # player.draw_debug_rect()
-
-    # update sprites
-    grp.update(clock.get_time() / 1000)
-
-    font_surface = font.render(f"SC{Game.get_instance().score:05d}", False, (162, 27, 159))
-    screen.blit(font_surface, (650, 510))
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT or (event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE):
@@ -143,5 +146,6 @@ while run:
 
     pygame.display.flip()
 
+Game.destroy()
 pygame.font.quit()
 pygame.quit()

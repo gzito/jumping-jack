@@ -15,17 +15,18 @@ SCALE_SIZE = (ORIGINAL_SIZE[0] * SCALE, ORIGINAL_SIZE[1] * SCALE)
 SCALED_PLAYER_WIDTH = SCALE_SIZE[0]
 SCALED_PLAYER_HEIGHT = SCALE_SIZE[1]
 
-LINEA_WIDTH = 800
+L_SCREEN_EDGE = 60
+R_SCREEN_EDGE = 739
+
+LINEA_WIDTH = (R_SCREEN_EDGE + 1) - L_SCREEN_EDGE
 LINEA_SPESSORE = 6
 SPAZIO_TRA_LINEE = 60
 BUCO_WIDTH = 80
 HOLES_SPEED = 4
 PLAYER_SPEED = 4
-# massimo 8 buche - 1 buca ogni volta che si salta sopra una linea
+# max 8 holes - spawns 1 hole every time you get up one line
 MAX_HOLES = 8
 
-# lines list
-line_list = []
-
-# holes list
-hole_list = []
+GROUP_BCKGRND = "bg"
+GROUP_ENEMIES = "enemies"
+GROUP_PLAYER = "player"
