@@ -6,7 +6,6 @@ from screen_flash import ScreenFlash
 
 class Player(ZSprite):
     def __init__(self):
-        # chiama init della classe padre (ZSprite)
         super().__init__()
         self.state = HidleState()
         self.next_jump_y = 0
@@ -16,11 +15,11 @@ class Player(ZSprite):
     def update(self, *args, **kwargs):
         self.state.handle_input(self)
         self.state.update(self, *args)
-        super().update(*args, **kwargs)  # chiama update() della classe padre ZSprite
+        super().update(*args, **kwargs)
         # print(f'{self.rect.x},{self.rect.y}')
 
     def move(self, dx, dy):
-        super().move(dx, dy)  # disegna lo sprite spostato
+        super().move(dx, dy)  # move the sprite of the given offset
         if dx > 0:
             self.direction = 1
         else:

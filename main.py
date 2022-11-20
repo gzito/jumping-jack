@@ -1,18 +1,12 @@
+# online zx spectrum emulator
 # http://torinak.com/qaop/games
 # http://torinak.com/qaop#!jumpingjack
 
 import random
-import pygame
+
 from pygame.font import Font
-
-from game import Game
-from globals import *
-
-from player import *
-from hole import Hole
 from line import Line
-
-from game_objects import Animation2D, AnimFrame2D, ZSprite
+from player import *
 
 RESOLUTION = (800, 600)
 DISPLAY_MODE_FLAGS = pygame.DOUBLEBUF
@@ -32,7 +26,7 @@ font = Font('fonts/Konsystem.ttf', 30)
 # load images
 # bg_img = pygame.image.load('img/background.png')
 
-# definisce animazione hidle
+# hidle animation
 hidle_anim = Animation2D(True)
 pausa1 = pygame.image.load('img/idle1.png')
 pausa2 = pygame.image.load('img/idle2.png')
@@ -47,7 +41,7 @@ hidle_anim.add_frame(AnimFrame2D(pausa2, 0.75))
 hidle_anim.add_frame(AnimFrame2D(pausa1, 0.75))
 hidle_anim.add_frame(AnimFrame2D(pausa3, 0.75))
 
-# definisce animazione camminata
+# walk animation
 walk_anim_right = Animation2D(True)
 walk_anim_left = Animation2D(True)
 for num in range(1, 5):
@@ -61,21 +55,21 @@ walk_anim_right.speed = 1
 walk_anim_left.loop = True
 walk_anim_left.speed = 1
 
-# definisce animazione salto
+# jump animation
 jump_anim = Animation2D(True)
 for num in range(1, 4):
     frame = pygame.image.load(f'img/jump{num}.png')
     frame = pygame.transform.scale(frame, SCALE_SIZE)
     jump_anim.add_frame(AnimFrame2D(frame, 0.05))
 
-# definisce animazione elettrificato
+# electrified animation
 electrified_anim = Animation2D(True)
 for num in range(1, 3):
     frame = pygame.image.load(f'img/stunned{num}.png')
     frame = pygame.transform.scale(frame, SCALE_SIZE)
     electrified_anim.add_frame(AnimFrame2D(frame, 0.50))
 
-# definisce animazione stordito
+# stunned animation
 stunned_anim = Animation2D(True)
 for num in range(3, 7):
     frame = pygame.image.load(f'img/stunned{num}.png')
@@ -83,7 +77,6 @@ for num in range(3, 7):
     stunned_anim.add_frame(AnimFrame2D(frame, 0.05))
     stunned_anim.loop = True
 
-# 511 bottom
 player = Player()
 player.add_animation("hidle", hidle_anim)
 player.add_animation("walk_right", walk_anim_right)
@@ -92,23 +85,23 @@ player.add_animation("jump", jump_anim)
 player.add_animation("electrified", electrified_anim)
 player.add_animation("stunned", stunned_anim)
 player.set_animation(hidle_anim)
-player.set_position(383, 550 - SCALED_PLAYER_HEIGHT + 1)  # posizione iniziale
+player.set_position(383, 550 - SCALED_PLAYER_HEIGHT + 1)  # posizione iniziale 511 bottom
 
-# crea gruppo di sprite
+# sprites groups
 Game.instance().sprite_group[GROUP_BCKGRND] = pygame.sprite.Group()
 Game.instance().sprite_group[GROUP_ENEMIES] = pygame.sprite.Group()
 Game.instance().sprite_group[GROUP_PLAYER] = pygame.sprite.Group()
 
 # lines
 for i in range(0, 8):
-    print(f'linea {i}: {70 + i * SPAZIO_TRA_LINEE}')
-    linea = Line(L_SCREEN_EDGE, 70 + i * SPAZIO_TRA_LINEE)
+    print(f'linea {i}: {70 + i * LINES_DISTANCE}')
+    linea = Line(L_SCREEN_EDGE, 70 + i * LINES_DISTANCE)
     Game.instance().line_list.append(linea)
     Game.instance().sprite_group[GROUP_BCKGRND].add(linea)
 
-# spawns 2 holes
-Game.instance().spawn_hole(400, 130, HOLES_SPEED, Game.instance().sprite_group[GROUP_BCKGRND])
-Game.instance().spawn_hole(400, 130, -HOLES_SPEED, Game.instance().sprite_group[GROUP_BCKGRND])
+# spawns 2 holes and place them inside GROUP_BCKGRND
+Game.instance().spawn_hole(400, 130, HOLE_SPEED, Game.instance().sprite_group[GROUP_BCKGRND])
+Game.instance().spawn_hole(400, 130, -HOLE_SPEED, Game.instance().sprite_group[GROUP_BCKGRND])
 
 Game.instance().sprite_group[GROUP_PLAYER].add(player)
 
@@ -119,7 +112,7 @@ run = True
 while run:
     clock.tick(FPS)
 
-    # disegna sfondo
+    # draw background
     screen.fill(game.bg_color)
 
     # draw score
@@ -132,7 +125,7 @@ while run:
     Game.instance().sprite_group[GROUP_ENEMIES].update(dt)
     Game.instance().sprite_group[GROUP_PLAYER].update(dt)
 
-    # disegna i gruppo di sprite
+    # draw sprites
     Game.instance().sprite_group[GROUP_BCKGRND].draw(screen)
     Game.instance().sprite_group[GROUP_ENEMIES].draw(screen)
     Game.instance().sprite_group[GROUP_PLAYER].draw(screen)
