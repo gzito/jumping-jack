@@ -55,7 +55,7 @@ hidle_anim.add_frame(AnimFrame2D(pausa3, 0.75))
 # definisce animazione camminata
 walk_anim_right = Animation2D(True)
 walk_anim_left = Animation2D(True)
-for num in range(2, 6):
+for num in range(1, 5):
     frame = pygame.image.load(f'img/walk{num}.png')
     frame = pygame.transform.scale(frame, SCALE_SIZE)
     walk_anim_right.add_frame(AnimFrame2D(frame, 0.05))
