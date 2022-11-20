@@ -1,5 +1,7 @@
+from game import Game, spawn_random_hole
 from game_objects import *
 from globals import *
+from screen_flash import ScreenFlash
 
 
 class Player(ZSprite):
@@ -104,11 +106,11 @@ class WalkingState(PlayerState):
     def handle_input(self, player):
         key = pygame.key.get_pressed()
         if key[pygame.K_LEFT]:
-            player.move(-5, 0)
+            player.move(-PLAYER_SPEED, 0)
             if player.get_x() < 0 - SCALED_PLAYER_WIDTH:
                 player.set_x(800 + SCALED_PLAYER_WIDTH)
         elif key[pygame.K_RIGHT]:
-            player.move(5, 0)
+            player.move(PLAYER_SPEED, 0)
             if player.get_x() > 800:
                 player.set_x(0)
         else:
@@ -143,6 +145,9 @@ class JumpingState(PlayerState):
                 player.next_jump_y = player.y - 60
                 player.linea_sopra = player.linea_sopra - 1
                 player.change_state(HidleState())
+                grp = Game.get_instance().get_group()
+                spawn_random_hole(grp)
+                Game.get_instance().score = Game.instance.score + 5
         else:
             if player.y <= line_list[player.linea_sopra].rect.y:
                 player.y = line_list[player.linea_sopra].rect.y
@@ -168,11 +173,17 @@ class FallingState(PlayerState):
 class ElectricfiedState(PlayerState):
     def __init__(self):
         super().__init__()
+        self.flash = ScreenFlash(Game.get_instance().background_color, (255, 255, 255), 100, 3)
 
     def enter(self, player):
         player.set_animation(player.animations["electrified"])
+        self.flash.start()
+
+    def exit(self, player):
+        self.flash.stop()
 
     def update(self, player, dt):
+        self.flash.update()
         if player.get_animation().is_ended():
             player.change_state(StunnedState())
             player.move(0, 21)
@@ -186,7 +197,10 @@ class StunnedState(PlayerState):
         player.set_animation(player.animations["stunned"])
 
     def update(self, player, dt):
-        if player.get_animation().current_time > 3:
+        if player.has_hole_down():
+            player.change_state(HidleState())
+
+        if player.get_animation().current_time > 1:
             player.change_state(HidleState())
 
 

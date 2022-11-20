@@ -3,7 +3,9 @@
 
 import random
 import pygame
+from pygame.font import Font
 
+from game import Game, spawn_hole
 from globals import *
 
 from player import *
@@ -17,22 +19,15 @@ DISPLAY_MODE_FLAGS = pygame.DOUBLEBUF
 # DISPLAY_MODE_FLAGS = pygame.DOUBLEBUF|pygame.FULLSCREEN
 
 
-def spawn_hole(x, y, speed, grp):
-    hole = Hole(x, y)
-    hole.vel = speed
-    grp.add(hole)
-    hole_list.append(hole)
-    return hole
-
-
 # ------------------------------------inizio main --------------------------------------------
-
+random.seed()
 pygame.init()
+pygame.font.init()
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode(RESOLUTION, DISPLAY_MODE_FLAGS, vsync=1)
 pygame.display.set_caption('Jumping Jack')
 
-background_color = (181, 178, 184)
+font = Font('fonts/Konsystem.ttf', 30)
 
 # load images
 # bg_img = pygame.image.load('img/background.png')
@@ -101,6 +96,7 @@ player.set_position(383, 550 - SCALED_PLAYER_HEIGHT + 1)  # posizione iniziale
 
 # crea gruppo di sprite
 grp = pygame.sprite.Group()
+Game.get_instance().set_group(grp)
 
 # lines
 for i in range(0, 8):
@@ -109,11 +105,14 @@ for i in range(0, 8):
     line_list.append(linea)
     grp.add(linea)
 
-# hole
+# spawns 2 holes
 spawn_hole(400, 130, HOLES_SPEED, grp)
 spawn_hole(400, 130, -HOLES_SPEED, grp)
 
 grp.add(player)
+
+game = Game.get_instance()
+game.background_color = BACKGROUND_COLOR
 
 run = True
 while run:
@@ -124,7 +123,7 @@ while run:
 
     # disegna sfondo
     # screen.blit(bg_img, (0, 0))
-    screen.fill(background_color)
+    screen.fill(game.background_color)
 
     # disegna il gruppo di sprite
     grp.draw(screen)
@@ -135,10 +134,14 @@ while run:
     # update sprites
     grp.update(clock.get_time() / 1000)
 
+    font_surface = font.render(f"SC{Game.get_instance().score:05d}", False, (162, 27, 159))
+    screen.blit(font_surface, (650, 510))
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT or (event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE):
             run = False
 
     pygame.display.flip()
 
+pygame.font.quit()
 pygame.quit()
