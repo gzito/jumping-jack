@@ -17,6 +17,11 @@ class Game:
         self.hole_list = []
         self.lives_list = []
 
+    def set_bg_color(self, color):
+        self.bg_color = color
+        for hole in self.hole_list:
+            hole.switch_surface(color)
+
     # spawn new hole
     def spawn_hole(self, x, y, speed, grp):
         hole = Hole(x, y)

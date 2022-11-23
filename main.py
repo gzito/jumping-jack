@@ -22,7 +22,7 @@ clock = pygame.time.Clock()
 screen = pygame.display.set_mode(RESOLUTION, DISPLAY_MODE_FLAGS, vsync=1)
 pygame.display.set_caption('Jumping Jack')
 
-font = Font('fonts/RetroGaming.ttf', 10*SCALE_FACTOR_Y)
+font = Font('fonts/RetroGaming.ttf', 8)
 
 # hidle animation
 hidle_anim = Animation2D(True)
@@ -83,7 +83,7 @@ player.add_animation("jump", jump_anim)
 player.add_animation("electrified", electrified_anim)
 player.add_animation("stunned", stunned_anim)
 player.set_animation(hidle_anim)
-player.set_position(383, 176*SCALE_FACTOR_Y)  # posizione iniziale
+player.set_position(383, 176 * SCALE_FACTOR_Y)  # posizione iniziale
 
 lifeFrame = pygame.image.load(f'img/life.png')
 lifeFrame = pygame.transform.scale(lifeFrame, SCALED_LIFE_SIZE)
@@ -101,14 +101,16 @@ for i in range(0, 8):
 
 # spawns 2 holes and place them inside GROUP_BCKGRND
 line1_y = Game.instance().line_list[1].rect.y
-Game.instance().spawn_hole(128*SCALE_FACTOR_X, line1_y,  SCALED_HOLE_SPEED, Game.instance().sprite_group[GROUP_BCKGRND])
-Game.instance().spawn_hole(128*SCALE_FACTOR_X, line1_y, -SCALED_HOLE_SPEED, Game.instance().sprite_group[GROUP_BCKGRND])
+Game.instance().spawn_hole(128 * SCALE_FACTOR_X, line1_y, SCALED_HOLE_SPEED,
+                           Game.instance().sprite_group[GROUP_BCKGRND])
+Game.instance().spawn_hole(128 * SCALE_FACTOR_X, line1_y, -SCALED_HOLE_SPEED,
+                           Game.instance().sprite_group[GROUP_BCKGRND])
 
 # lives
 for num in range(LIVES):
     life = Sprite()
-    life.rect = Rect(((L_SCREEN_EDGE + (num*8)) * SCALE_FACTOR_X,
-                      176*SCALE_FACTOR_Y), (lifeFrame.get_width(), lifeFrame.get_height()))
+    life.rect = Rect(((L_SCREEN_EDGE + (num * 8)) * SCALE_FACTOR_X,
+                      176 * SCALE_FACTOR_Y), (lifeFrame.get_width(), lifeFrame.get_height()))
     life.image = lifeFrame
     Game.instance().lives_list.append(life)
     Game.instance().sprite_group[GROUP_BCKGRND].add(life)
@@ -127,7 +129,9 @@ while run:
 
     # draw score
     font_surface = font.render(f"SC{Game.instance().score:05d}", False, SCORE_COLOR)
-    screen.blit(font_surface, (197*SCALE_FACTOR_X, 174*SCALE_FACTOR_Y))
+    font_surface = pygame.transform.scale(font_surface, (
+        font_surface.get_width() * SCALE_FACTOR_X, font_surface.get_height() * SCALE_FACTOR_Y))
+    screen.blit(font_surface, (197 * SCALE_FACTOR_X, 174 * SCALE_FACTOR_Y))
 
     # update sprites
     dt = clock.get_time() / 1000

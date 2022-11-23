@@ -15,8 +15,8 @@ class ZSprite(pygame.sprite.Sprite):
         self.animation = None  # current animation
         self.direction = 0  # direction (1-right, -1-left, 0-halted)
         self.animations = {}  # animations dictionary
-        self.x = 0  # sprite x-location
-        self.y = 0  # sprite y-location
+        self.x = 0.0  # sprite x-location
+        self.y = 0.0  # sprite y-location
 
     def set_hotspot(self, hx, hy):
         self.hotspot.x = hx
@@ -25,7 +25,7 @@ class ZSprite(pygame.sprite.Sprite):
     def set_position(self, x, y):
         self.x = x
         self.y = y
-        self.rect.move_ip(x - self.hotspot.x, y - self.hotspot.y)
+        self.rect.update(self.x - self.hotspot.x, self.y - self.hotspot.y, self.rect.width, self.rect.height)
 
     def get_position(self):
         return Point(self.x, self.y)
@@ -38,16 +38,16 @@ class ZSprite(pygame.sprite.Sprite):
 
     def set_x(self, x):
         self.x = x
-        self.rect.update(self.x, self.y, self.rect.width, self.rect.height)
+        # self.rect.update(self.x, self.y, self.rect.width, self.rect.height)
 
     def set_y(self, y):
         self.y = y
-        self.rect.update(self.x, self.y, self.rect.width, self.rect.height)
+        # self.rect.update(self.x, self.y, self.rect.width, self.rect.height)
 
-    def move(self, dx, dy):
+    def move(self, dx=0.0, dy=0.0):
         self.x = self.x + dx
         self.y = self.y + dy
-        self.rect.move_ip(dx - self.hotspot.x, dy - self.hotspot.y)
+        # self.rect.update(self.x, self.y, self.rect.width, self.rect.height)
 
     def set_frame(self, frame):
         self.image = frame.image
@@ -69,7 +69,8 @@ class ZSprite(pygame.sprite.Sprite):
     def update(self, *args, **kwargs):
         if self.animation is not None:
             self.animation.update(args[0])
-        self.image = self.animation.get_current_frame()
+            self.image = self.animation.get_current_frame()
+        self.rect.update(self.x, self.y, self.rect.width, self.rect.height)
 
     def add_animation(self, name, animation):
         self.animations[name] = animation

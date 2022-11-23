@@ -16,10 +16,11 @@ class Player(ZSprite):
         self.state.handle_input(self)
         self.state.update(self, *args)
         super().update(*args, **kwargs)
-        # print(f'{self.rect.x},{self.rect.y}')
+        # print(f'{self.x},{self.y}')
 
-    def move(self, dx, dy):
-        super().move(dx, dy)  # move the sprite of the given offset
+    # move the sprite of the given offset
+    def move(self, dx=0.0, dy=0.0):
+        super().move(dx, dy)
         if dx > 0:
             self.direction = 1
         else:
@@ -167,7 +168,7 @@ class FallingState(PlayerState):
 class ElectricfiedState(PlayerState):
     def __init__(self):
         super().__init__()
-        self.flash = ScreenFlash(Game.instance().bg_color, (255, 255, 255), 250, 3)
+        self.flash = ScreenFlash(BACKGROUND_COLOR, FLASH_COLOR, 200, 3)
 
     def enter(self, player):
         player.set_animation(player.animations["electrified"])
