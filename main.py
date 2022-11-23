@@ -22,7 +22,6 @@ clock = pygame.time.Clock()
 screen = pygame.display.set_mode(RESOLUTION, DISPLAY_MODE_FLAGS, vsync=1)
 pygame.display.set_caption('Jumping Jack')
 
-font = Font('fonts/RetroGaming.ttf', 8)
 
 # hidle animation
 hidle_anim = Animation2D(True)
@@ -75,6 +74,29 @@ for num in range(3, 7):
     stunned_anim.add_frame(AnimFrame2D(frame, 0.05))
     stunned_anim.loop = True
 
+lifeFrame = pygame.image.load(f'img/life.png')
+lifeFrame = pygame.transform.scale(lifeFrame, SCALED_LIFE_SIZE)
+
+# create floors
+Game.instance().create_floors()
+
+# spawns 2 holes and place them inside GROUP_BCKGRND
+line1_y = Game.instance().line_list[1].rect.y
+Game.instance().spawn_hole(128 * SCALE_FACTOR_X, line1_y, SCALED_HOLE_SPEED,
+                           Game.instance().sprite_group[GROUP_BCKGRND])
+Game.instance().spawn_hole(128 * SCALE_FACTOR_X, line1_y, -SCALED_HOLE_SPEED,
+                           Game.instance().sprite_group[GROUP_BCKGRND])
+
+# create lives
+for num in range(Game.instance().lives):
+    life = Sprite()
+    life.rect = Rect(((L_SCREEN_EDGE + (num * 8)) * SCALE_FACTOR_X, 176 * SCALE_FACTOR_Y),
+                     (lifeFrame.get_width(), lifeFrame.get_height()))
+    life.image = lifeFrame
+    Game.instance().life_list.append(life)
+    Game.instance().sprite_group[GROUP_HUD].add(life)
+
+# create player
 player = Player()
 player.add_animation("hidle", hidle_anim)
 player.add_animation("walk_right", walk_anim_right)
@@ -85,54 +107,30 @@ player.add_animation("stunned", stunned_anim)
 player.set_animation(hidle_anim)
 # starting position
 player.set_position((ORIGINAL_RESOLUTION[0] - ORIGINAL_PLAYER_SIZE[0]) / 2 * SCALE_FACTOR_X, 176 * SCALE_FACTOR_Y)
-
-lifeFrame = pygame.image.load(f'img/life.png')
-lifeFrame = pygame.transform.scale(lifeFrame, SCALED_LIFE_SIZE)
-
-# sprites groups
-Game.instance().sprite_group[GROUP_BCKGRND] = pygame.sprite.Group()
-Game.instance().sprite_group[GROUP_ENEMIES] = pygame.sprite.Group()
-Game.instance().sprite_group[GROUP_PLAYER] = pygame.sprite.Group()
-
-# lines
-for i in range(0, 8):
-    linea = Line(i)
-    Game.instance().line_list.append(linea)
-    Game.instance().sprite_group[GROUP_BCKGRND].add(linea)
-
-# spawns 2 holes and place them inside GROUP_BCKGRND
-line1_y = Game.instance().line_list[1].rect.y
-Game.instance().spawn_hole(128 * SCALE_FACTOR_X, line1_y, SCALED_HOLE_SPEED,
-                           Game.instance().sprite_group[GROUP_BCKGRND])
-Game.instance().spawn_hole(128 * SCALE_FACTOR_X, line1_y, -SCALED_HOLE_SPEED,
-                           Game.instance().sprite_group[GROUP_BCKGRND])
-
-# lives
-for num in range(LIVES):
-    life = Sprite()
-    life.rect = Rect(((L_SCREEN_EDGE + (num * 8)) * SCALE_FACTOR_X,
-                      176 * SCALE_FACTOR_Y), (lifeFrame.get_width(), lifeFrame.get_height()))
-    life.image = lifeFrame
-    Game.instance().lives_list.append(life)
-    Game.instance().sprite_group[GROUP_BCKGRND].add(life)
-
 Game.instance().sprite_group[GROUP_PLAYER].add(player)
 
-game = Game.instance()
-game.bg_color = BACKGROUND_COLOR
 
+Game.instance().bg_color = BACKGROUND_COLOR
+
+
+# ===================================================================================================
+#
+# main loop
+#
+# ===================================================================================================
 run = True
 while run:
     clock.tick(FPS)
 
     # draw background
-    screen.fill(game.bg_color)
+    screen.fill(Game.instance().bg_color)
 
     # draw score
-    font_surface = font.render(f"SC{Game.instance().score:05d}", False, SCORE_COLOR)
+    font_surface = Game.instance().font.render(f"SC{Game.instance().score:05d}", False, SCORE_COLOR)
     font_surface = pygame.transform.scale(font_surface, (
         font_surface.get_width() * SCALE_FACTOR_X, font_surface.get_height() * SCALE_FACTOR_Y))
-    screen.blit(font_surface, (197 * SCALE_FACTOR_X, 174 * SCALE_FACTOR_Y))
+    w = font_surface.get_width()
+    screen.blit(font_surface, (SCALED_R_SCREEN_EDGE-w, 176 * SCALE_FACTOR_Y))
 
     # update sprites
     dt = clock.get_time() / 1000
@@ -142,6 +140,7 @@ while run:
 
     # draw sprites
     Game.instance().sprite_group[GROUP_BCKGRND].draw(screen)
+    Game.instance().sprite_group[GROUP_HUD].draw(screen)
     Game.instance().sprite_group[GROUP_ENEMIES].draw(screen)
     Game.instance().sprite_group[GROUP_PLAYER].draw(screen)
 

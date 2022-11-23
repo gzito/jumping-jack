@@ -60,5 +60,6 @@ MAX_HOLES = 8  # max 8 holes - spawns 1 hole every time the player gets up one l
 LIVES = 6
 
 GROUP_BCKGRND = "bg"
+GROUP_HUD = "hud"
 GROUP_ENEMIES = "enemies"
 GROUP_PLAYER = "player"

@@ -27,11 +27,12 @@ class Hole(ZSprite):
 
         self.image = Hole.color_dict_[BACKGROUND_COLOR]
         self.rect = Rect(x, y, SCALED_HOLE_WIDTH, SCALED_LINE_THICKNESS)
-        self.vel = 0.0
+        self.speed = 0.0
+
         self.set_position(x, y)
 
     def update(self, *args, **kwargs):
-        self.set_x(self.x + self.vel)
+        self.set_x(self.x + self.speed)
         if self.x > SCALED_R_SCREEN_EDGE or self.x <= -SCALED_HOLE_WIDTH + SCALED_L_SCREEN_EDGE:
             self.wrap()
 
