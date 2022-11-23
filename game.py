@@ -1,14 +1,9 @@
 import pygame
 import hole
-
-from pygame.font import Font
-from pygame.rect import Rect
-from pygame.sprite import Sprite
-
-from game_objects import Animation2D, AnimFrame2D
+import player
+import line
+import game_objects
 from globals import *
-from line import Line
-from player import Player
 
 
 # Singleton class
@@ -31,7 +26,7 @@ class Game:
         self.score = 0
         self.level = 1
 
-        self.font = Font('fonts/zxspectr.ttf', 8)
+        self.font = pygame.font.Font('fonts/zxspectr.ttf', 8)
         self.state = None
         self.new_state = None
 
@@ -42,15 +37,15 @@ class Game:
 
     def create_floors(self):
         for i in range(8):
-            line = Line(i)
-            self.line_list.append(line)
-            self.sprite_group[GROUP_BCKGRND].add(line)
+            the_line = line.Line(i)
+            self.line_list.append(the_line)
+            self.sprite_group[GROUP_BCKGRND].add(the_line)
 
     def create_lives(self):
         life_frame = self.surfaces["life"]
         for num in range(self.lives):
-            life = Sprite()
-            life.rect = Rect(((L_SCREEN_EDGE + (num * 8)) * SCALE_FACTOR_X, 176 * SCALE_FACTOR_Y),
+            life = pygame.sprite.Sprite()
+            life.rect = pygame.rect.Rect(((L_SCREEN_EDGE + (num * 8)) * SCALE_FACTOR_X, 176 * SCALE_FACTOR_Y),
                              (life_frame.get_width(), life_frame.get_height()))
             life.image = life_frame
             self.life_list.append(life)
@@ -140,7 +135,7 @@ class PlayingState(GameState):
 
     def enter(self, game):
         # hidle animation
-        hidle_anim = Animation2D(True)
+        hidle_anim = game_objects.Animation2D(True)
         pausa1 = pygame.image.load('img/player/idle1.png')
         pausa2 = pygame.image.load('img/player/idle2.png')
         pausa3 = pygame.image.load('img/player/idle3.png')
@@ -149,45 +144,45 @@ class PlayingState(GameState):
         pausa3 = pygame.transform.scale(pausa3, SCALED_PLAYER_SIZE)
         hidle_anim.loop = True
         hidle_anim.speed = 1
-        hidle_anim.add_frame(AnimFrame2D(pausa1, 0.75))
-        hidle_anim.add_frame(AnimFrame2D(pausa2, 0.75))
-        hidle_anim.add_frame(AnimFrame2D(pausa1, 0.75))
-        hidle_anim.add_frame(AnimFrame2D(pausa3, 0.75))
+        hidle_anim.add_frame(game_objects.AnimFrame2D(pausa1, 0.75))
+        hidle_anim.add_frame(game_objects.AnimFrame2D(pausa2, 0.75))
+        hidle_anim.add_frame(game_objects.AnimFrame2D(pausa1, 0.75))
+        hidle_anim.add_frame(game_objects.AnimFrame2D(pausa3, 0.75))
 
         # walk animation
-        walk_anim_right = Animation2D(True)
-        walk_anim_left = Animation2D(True)
+        walk_anim_right = game_objects.Animation2D(True)
+        walk_anim_left = game_objects.Animation2D(True)
         for num in range(1, 5):
             frame = pygame.image.load(f'img/player/walk{num}.png')
             frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
-            walk_anim_right.add_frame(AnimFrame2D(frame, 0.05))
+            walk_anim_right.add_frame(game_objects.AnimFrame2D(frame, 0.05))
             frame = pygame.transform.flip(frame, True, False)
-            walk_anim_left.add_frame(AnimFrame2D(frame, 0.05))
+            walk_anim_left.add_frame(game_objects.AnimFrame2D(frame, 0.05))
         walk_anim_right.loop = True
         walk_anim_right.speed = 1
         walk_anim_left.loop = True
         walk_anim_left.speed = 1
 
         # jump animation
-        jump_anim = Animation2D(True)
+        jump_anim = game_objects.Animation2D(True)
         for num in range(1, 4):
             frame = pygame.image.load(f'img/player/jump{num}.png')
             frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
-            jump_anim.add_frame(AnimFrame2D(frame, 0.05))
+            jump_anim.add_frame(game_objects.AnimFrame2D(frame, 0.05))
 
         # electrified animation
-        electrified_anim = Animation2D(True)
+        electrified_anim = game_objects.Animation2D(True)
         for num in range(1, 3):
             frame = pygame.image.load(f'img/player/stunned{num}.png')
             frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
-            electrified_anim.add_frame(AnimFrame2D(frame, 0.50))
+            electrified_anim.add_frame(game_objects.AnimFrame2D(frame, 0.50))
 
         # stunned animation
-        stunned_anim = Animation2D(True)
+        stunned_anim = game_objects.Animation2D(True)
         for num in range(3, 7):
             frame = pygame.image.load(f'img/player/stunned{num}.png')
             frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
-            stunned_anim.add_frame(AnimFrame2D(frame, 0.05))
+            stunned_anim.add_frame(game_objects.AnimFrame2D(frame, 0.05))
             stunned_anim.loop = True
 
         life_frame = pygame.image.load(f'img/life.png')
@@ -195,18 +190,18 @@ class PlayingState(GameState):
         game.surfaces["life"] = life_frame
 
         # create player
-        player = Player()
-        player.add_animation("hidle", hidle_anim)
-        player.add_animation("walk_right", walk_anim_right)
-        player.add_animation("walk_left", walk_anim_left)
-        player.add_animation("jump", jump_anim)
-        player.add_animation("electrified", electrified_anim)
-        player.add_animation("stunned", stunned_anim)
-        player.set_animation(hidle_anim)
+        p = player.Player()
+        p.add_animation("hidle", hidle_anim)
+        p.add_animation("walk_right", walk_anim_right)
+        p.add_animation("walk_left", walk_anim_left)
+        p.add_animation("jump", jump_anim)
+        p.add_animation("electrified", electrified_anim)
+        p.add_animation("stunned", stunned_anim)
+        p.set_animation(hidle_anim)
         # starting position
-        player.set_position((ORIGINAL_RESOLUTION[0] - ORIGINAL_PLAYER_SIZE[0]) / 2 * SCALE_FACTOR_X,
+        p.set_position((ORIGINAL_RESOLUTION[0] - ORIGINAL_PLAYER_SIZE[0]) / 2 * SCALE_FACTOR_X,
                             176 * SCALE_FACTOR_Y)
-        game.sprite_group[GROUP_PLAYER].add(player)
+        game.sprite_group[GROUP_PLAYER].add(p)
 
         # create floors
         game.create_floors()

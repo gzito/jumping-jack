@@ -1,10 +1,7 @@
 import random
 import game
-
-from pygame.rect import Rect
-from pygame.surface import Surface
-
-from game_objects import ZSprite
+import pygame
+import game_objects
 from globals import *
 
 
@@ -30,7 +27,7 @@ def spawn_random_hole(grp):
         spawn_hole(x, y, speed, grp)
 
 
-class Hole(ZSprite):
+class Hole(game_objects.ZSprite):
     # static member
     color_dict_ = {}
 
@@ -38,12 +35,12 @@ class Hole(ZSprite):
         super().__init__()
 
         if BACKGROUND_COLOR not in Hole.color_dict_:
-            surface = Surface((SCALED_HOLE_WIDTH, SCALED_LINE_THICKNESS))
+            surface = pygame.surface.Surface((SCALED_HOLE_WIDTH, SCALED_LINE_THICKNESS))
             surface.fill(BACKGROUND_COLOR)
             Hole.color_dict_[BACKGROUND_COLOR] = surface
 
         if FLASH_COLOR not in Hole.color_dict_:
-            surface = Surface((SCALED_HOLE_WIDTH, SCALED_LINE_THICKNESS))
+            surface = pygame.surface.Surface((SCALED_HOLE_WIDTH, SCALED_LINE_THICKNESS))
             surface.fill(FLASH_COLOR)
             Hole.color_dict_[FLASH_COLOR] = surface
 
@@ -51,7 +48,7 @@ class Hole(ZSprite):
         self.surface_switched = False
 
         self.image = Hole.color_dict_[BACKGROUND_COLOR]
-        self.rect = Rect(x, y, SCALED_HOLE_WIDTH, SCALED_LINE_THICKNESS)
+        self.rect = pygame.rect.Rect(x, y, SCALED_HOLE_WIDTH, SCALED_LINE_THICKNESS)
         self.speed = 0.0
 
         self.set_position(x, y)

@@ -5,9 +5,8 @@
 #
 import random
 import pygame
-
-from globals import *
 import game
+from globals import *
 
 DISPLAY_MODE_FLAGS = pygame.DOUBLEBUF
 # DISPLAY_MODE_FLAGS = pygame.DOUBLEBUF|pygame.FULLSCREEN
