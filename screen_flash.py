@@ -2,6 +2,7 @@ from pygame.time import Clock
 
 import game
 
+
 class ScreenFlash:
     def __init__(self, orig_color, flash_color, duration_ms, times):
         self.colors = (orig_color, flash_color)

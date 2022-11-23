@@ -37,8 +37,8 @@ class Game:
 
     def set_bg_color(self, color):
         self.bg_color = color
-        for hole in self.instance().hole_list:
-            hole.switch_surface(color)
+        for the_hole in self.instance().hole_list:
+            the_hole.switch_surface(color)
 
     def create_floors(self):
         for i in range(8):
@@ -131,6 +131,9 @@ class GameState:
         pass
 
 
+# ===================================================================================================
+# PlayingState
+# ===================================================================================================
 class PlayingState(GameState):
     def __init__(self):
         super().__init__()
@@ -251,6 +254,9 @@ class PlayingState(GameState):
         game.life_list.clear()
 
 
+# ===================================================================================================
+# LevelUpState
+# ===================================================================================================
 class LevelUpState(GameState):
     def __init__(self):
         super().__init__()
@@ -279,6 +285,9 @@ class LevelUpState(GameState):
         pass
 
 
+# ===================================================================================================
+# GameOverState
+# ===================================================================================================
 class GameOverState(GameState):
     def __init__(self):
         super().__init__()

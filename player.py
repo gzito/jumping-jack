@@ -46,8 +46,8 @@ class Player(ZSprite):
     def has_hole_up(self):
         tollerance = 3 * SCALE_FACTOR_X
 
-        for hole in game.Game.instance().hole_list:
-            rect = hole.rect
+        for the_hole in game.Game.instance().hole_list:
+            rect = the_hole.rect
             if abs(self.rect.y - rect.bottom) <= 7 * SCALE_FACTOR_Y:
                 if self.rect.x >= (rect.x - tollerance) and self.rect.right <= (rect.right + tollerance):
                     return True
