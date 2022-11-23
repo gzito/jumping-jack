@@ -1,4 +1,5 @@
-from game import Game
+import game
+import hole
 from game_objects import *
 from globals import *
 from screen_flash import ScreenFlash
@@ -8,15 +9,24 @@ class Player(ZSprite):
     def __init__(self):
         super().__init__()
         self.state = HidleState()
+        self.new_state = None
         self.next_jump_y = 0
         self.next_fallen_y = 0
         # idx of line just above head
         self.line_idx = 7
 
     def update(self, *args, **kwargs):
+        if self.new_state is not None:
+            self.state = self.new_state
+            self.new_state = None
+            self.state.enter(self)
+
         self.state.handle_input(self)
         self.state.update(self, *args)
         super().update(*args, **kwargs)
+        if self.new_state is not None:
+            self.state.exit(self)
+
         # print(f'{self.x},{self.y}')
         # print(f'self.line_idx: {self.line_idx}')
 
@@ -31,15 +41,12 @@ class Player(ZSprite):
     def change_state(self, new_state):
         if isinstance(new_state, type(self.state)):
             return
-        # print(f'changing state from {self.state.__class__.__name__} to {new_state.__class__.__name__}')
-        self.state.exit(self)
-        self.state = new_state
-        self.state.enter(self)
+        self.new_state = new_state
 
     def has_hole_up(self):
         tollerance = 3 * SCALE_FACTOR_X
 
-        for hole in Game.instance().hole_list:
+        for hole in game.Game.instance().hole_list:
             rect = hole.rect
             if abs(self.rect.y - rect.bottom) <= 7 * SCALE_FACTOR_Y:
                 if self.rect.x >= (rect.x - tollerance) and self.rect.right <= (rect.right + tollerance):
@@ -47,7 +54,7 @@ class Player(ZSprite):
         return False
 
     def has_hole_down(self):
-        for hole in Game.instance().hole_list:
+        for hole in game.Game.instance().hole_list:
             rect = hole.rect
             if abs(self.rect.bottom - rect.y) <= 1:
                 if self.rect.x > rect.x and self.rect.right < rect.right:
@@ -87,9 +94,11 @@ class HidleState(PlayerState):
 
         if key[pygame.K_LEFT] or key[pygame.K_RIGHT]:
             player.change_state(WalkingState())
+            return
 
         if key[pygame.K_UP]:
             player.change_state(JumpingState())
+            return
 
     def update(self, player, *args, **kwargs):
         if player.has_hole_down():
@@ -137,20 +146,20 @@ class JumpingState(PlayerState):
         player.move(0, -1.5 * SCALE_FACTOR_Y)
 
         if self.has_hole_up:
-            if player.line_idx == 0 and player.y <= Game.instance().line_list[0].rect.y:
-                Game.instance().level_up()
+            if player.line_idx == 0 and player.y <= game.Game.instance().line_list[0].rect.y:
+                game.Game.instance().level_up()
 
             if player.y <= player.next_jump_y:
                 player.y = player.next_jump_y
                 player.next_jump_y = player.y - 25 * SCALE_FACTOR_Y
                 player.line_idx = player.line_idx - 1
+                grp = game.Game.instance().sprite_group[GROUP_BCKGRND]
+                hole.spawn_random_hole(grp)
+                game.Game.instance().score = game.Game.instance().score + 5
                 player.change_state(HidleState())
-                grp = Game.instance().sprite_group[GROUP_BCKGRND]
-                Game.instance().spawn_random_hole(grp)
-                Game.instance().score = Game.instance().score + 5
         else:
-            if player.y <= Game.instance().line_list[player.line_idx].rect.y:
-                player.y = Game.instance().line_list[player.line_idx].rect.y
+            if player.y <= game.Game.instance().line_list[player.line_idx].rect.y:
+                player.y = game.Game.instance().line_list[player.line_idx].rect.y
                 player.change_state(ElectricfiedState())
 
 
@@ -185,8 +194,8 @@ class ElectricfiedState(PlayerState):
     def update(self, player, dt):
         self.flash.update()
         if player.get_animation().is_ended():
-            player.change_state(StunnedState())
             player.move(0, 8 * SCALE_FACTOR_Y)
+            player.change_state(StunnedState())
 
 
 class StunnedState(PlayerState):
@@ -198,7 +207,7 @@ class StunnedState(PlayerState):
 
     def exit(self, player):
         if player.line_idx == 7:
-            Game().instance().decrement_lives()
+            game.Game().instance().decrement_lives()
 
     def update(self, player, dt):
         if player.has_hole_down():

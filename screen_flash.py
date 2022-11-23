@@ -1,9 +1,6 @@
-import pygame.display
 from pygame.time import Clock
 
-from game import Game
-from hole import Hole
-
+import game
 
 class ScreenFlash:
     def __init__(self, orig_color, flash_color, duration_ms, times):
@@ -24,7 +21,7 @@ class ScreenFlash:
         self.is_enabled = True
         self.counter = 0
         self.next_color_idx = 1
-        Game.instance().set_bg_color(self.colors[self.next_color_idx])
+        game.Game.instance().set_bg_color(self.colors[self.next_color_idx])
 
     def update(self):
         if self.is_enabled:
@@ -34,11 +31,11 @@ class ScreenFlash:
                 self.next_color_idx += 1
                 if self.next_color_idx > 1:
                     self.next_color_idx = 0
-                Game.instance().set_bg_color(self.colors[self.next_color_idx])
+                game.Game.instance().set_bg_color(self.colors[self.next_color_idx])
                 self.counter = self.counter + 1
                 if self.counter >= self.times:
                     self.stop()
 
     def stop(self):
-        Game.instance().set_bg_color(self.colors[0])
+        game.Game.instance().set_bg_color(self.colors[0])
         self.is_enabled = False

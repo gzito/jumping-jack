@@ -1,8 +1,33 @@
+import random
+import game
+
 from pygame.rect import Rect
 from pygame.surface import Surface
 
 from game_objects import ZSprite
 from globals import *
+
+
+# spawn new hole
+def spawn_hole(x, y, speed, grp):
+    hole = Hole(x, y)
+    hole.speed = speed
+    grp.add(hole)
+    game.Game.instance().hole_list.append(hole)
+    return hole
+
+
+# spawn new hole at random location
+def spawn_random_hole(grp):
+    if len(game.Game.instance().hole_list) < 8:
+        x = random.randint(SCALED_L_SCREEN_EDGE, SCALED_R_SCREEN_EDGE)
+        y = game.Game.instance().line_list[random.randint(0, 7)].rect.y
+        hole_sign = random.randint(0, 1)
+        if hole_sign == 0:
+            speed = SCALED_HOLE_SPEED
+        else:
+            speed = -SCALED_HOLE_SPEED
+        spawn_hole(x, y, speed, grp)
 
 
 class Hole(ZSprite):
