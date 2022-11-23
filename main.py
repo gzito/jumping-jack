@@ -83,7 +83,8 @@ player.add_animation("jump", jump_anim)
 player.add_animation("electrified", electrified_anim)
 player.add_animation("stunned", stunned_anim)
 player.set_animation(hidle_anim)
-player.set_position(383, 176 * SCALE_FACTOR_Y)  # posizione iniziale
+# starting position
+player.set_position((ORIGINAL_RESOLUTION[0] - ORIGINAL_PLAYER_SIZE[0]) / 2 * SCALE_FACTOR_X, 176 * SCALE_FACTOR_Y)
 
 lifeFrame = pygame.image.load(f'img/life.png')
 lifeFrame = pygame.transform.scale(lifeFrame, SCALED_LIFE_SIZE)

@@ -1,9 +1,7 @@
 FPS = 60
 
-BACKGROUND_COLOR = (202, 203, 195)
-FLASH_COLOR = (255, 255, 255)
-LINE_COLOR = (197, 0, 0)
-SCORE_COLOR = (162, 27, 159)
+# current resolution
+RESOLUTION = (1024, 768)
 
 # original size of ZX Spectrum screen
 ORIGINAL_RESOLUTION = (256, 192)
@@ -14,9 +12,6 @@ ORIGINAL_BLOCKS = (32, 24)
 ORIGINAL_PLAYER_SIZE = (16, 16)
 ORIGINAL_LIFE_SIZE = (8, 8)
 ORIGINAL_ENEMIES_SIZE = (24, 16)
-
-# current resolution
-RESOLUTION = (800, 600)
 
 # scale factors
 SCALE_FACTOR_X = RESOLUTION[0] / ORIGINAL_RESOLUTION[0]
@@ -54,8 +49,14 @@ SCALED_HOLE_WIDTH = HOLE_WIDTH * SCALE_FACTOR_X
 HOLE_SPEED = 1.5
 SCALED_HOLE_SPEED = HOLE_SPEED * SCALE_FACTOR_X
 
-MAX_HOLES = 8  # max 8 holes - spawns 1 hole every time you get up one line
+# colors
+BACKGROUND_COLOR = (202, 203, 195)
+FLASH_COLOR = (255, 255, 255)
+LINE_COLOR = (197, 0, 0)
+SCORE_COLOR = (162, 27, 159)
 
+# miscellaneous
+MAX_HOLES = 8  # max 8 holes - spawns 1 hole every time the player gets up one line
 LIVES = 6
 
 GROUP_BCKGRND = "bg"

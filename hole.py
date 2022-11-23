@@ -28,6 +28,7 @@ class Hole(ZSprite):
         self.image = Hole.color_dict_[BACKGROUND_COLOR]
         self.rect = Rect(x, y, SCALED_HOLE_WIDTH, SCALED_LINE_THICKNESS)
         self.vel = 0.0
+        self.set_position(x, y)
 
     def update(self, *args, **kwargs):
         self.set_x(self.x + self.vel)
