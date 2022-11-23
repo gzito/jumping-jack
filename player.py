@@ -34,11 +34,11 @@ class Player(ZSprite):
         self.state.enter(self)
 
     def has_hole_up(self):
-        tollerance = 10
+        tollerance = 3*SCALE_FACTOR_X
 
         for hole in Game.instance().hole_list:
             rect = hole.rect
-            if abs(self.rect.y - rect.bottom) <= 20:
+            if abs(self.rect.y - rect.bottom) <= 7*SCALE_FACTOR_Y:
                 if self.rect.x >= (rect.x - tollerance) and self.rect.right <= (rect.right + tollerance):
                     return True
         return False
@@ -100,13 +100,13 @@ class WalkingState(PlayerState):
     def handle_input(self, player):
         key = pygame.key.get_pressed()
         if key[pygame.K_LEFT]:
-            player.move(-PLAYER_SPEED, 0)
-            if player.get_x() < L_SCREEN_EDGE:
-                player.set_x(R_SCREEN_EDGE - SCALED_PLAYER_WIDTH)
+            player.move(-SCALED_PLAYER_SPEED, 0)
+            if player.get_x() < SCALED_L_SCREEN_EDGE:
+                player.set_x(SCALED_R_SCREEN_EDGE - SCALED_PLAYER_WIDTH)
         elif key[pygame.K_RIGHT]:
-            player.move(PLAYER_SPEED, 0)
-            if player.get_x() > R_SCREEN_EDGE - SCALED_PLAYER_WIDTH:
-                player.set_x(L_SCREEN_EDGE)
+            player.move(SCALED_PLAYER_SPEED, 0)
+            if player.get_x() > SCALED_R_SCREEN_EDGE - SCALED_PLAYER_WIDTH:
+                player.set_x(SCALED_L_SCREEN_EDGE)
         else:
             player.change_state(HidleState())
 
@@ -127,16 +127,16 @@ class JumpingState(PlayerState):
 
     def enter(self, player):
         player.set_animation(player.animations["jump"])
-        player.next_jump_y = player.y - 60
+        player.next_jump_y = player.y - 24*SCALE_FACTOR_Y
         self.has_hole_up = player.has_hole_up()
 
     def update(self, player, dt):
-        player.move(0, -4)
+        player.move(0, -1.5*SCALE_FACTOR_Y)
 
         if self.has_hole_up:
             if player.y <= player.next_jump_y:
                 player.y = player.next_jump_y
-                player.next_jump_y = player.y - 60
+                player.next_jump_y = player.y - 25*SCALE_FACTOR_Y
                 player.line_idx = player.line_idx - 1
                 player.change_state(HidleState())
                 grp = Game.instance().sprite_group[GROUP_BCKGRND]
@@ -153,13 +153,13 @@ class FallingState(PlayerState):
         super().__init__()
 
     def enter(self, player):
-        player.next_fallen_y = player.y + 60
+        player.next_fallen_y = player.y + 24*SCALE_FACTOR_Y
 
     def update(self, player, dt):
         player.move(0, 5)
         if player.y >= player.next_fallen_y:
             player.y = player.next_fallen_y
-            player.next_fallen_y = player.y + 60
+            player.next_fallen_y = player.y + 24*SCALE_FACTOR_Y
             player.line_idx = player.line_idx + 1
             player.change_state(StunnedState())
 
@@ -180,7 +180,7 @@ class ElectricfiedState(PlayerState):
         self.flash.update()
         if player.get_animation().is_ended():
             player.change_state(StunnedState())
-            player.move(0, 21)
+            player.move(0, 8*SCALE_FACTOR_Y)
 
 
 class StunnedState(PlayerState):

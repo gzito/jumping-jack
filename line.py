@@ -3,12 +3,11 @@ from globals import *
 
 
 class Line(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, i):
         super().__init__()
-        self.image = pygame.Surface((LINE_WIDTH, LINE_THICKNESS))
-        self.image.fill((255, 0, 0))
-        self.rect = pygame.Rect(x, y, LINE_WIDTH, LINE_THICKNESS)
-        self.rect.x = x
-        self.rect.y = y
-        self.rect.right = x + LINE_WIDTH
-        self.rect.bottom = y + LINE_THICKNESS
+        x = SCALED_L_SCREEN_EDGE
+        y = i * SCALED_LINES_DISTANCE
+        print(f'linea {i}: {i * SCALED_LINES_DISTANCE}')
+        self.image = pygame.Surface((SCALED_LINE_WIDTH, SCALED_LINE_THICKNESS))
+        self.image.fill(LINE_COLOR)
+        self.rect = pygame.Rect(x, y, SCALED_LINE_WIDTH, SCALED_LINE_THICKNESS)

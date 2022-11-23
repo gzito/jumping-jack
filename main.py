@@ -5,10 +5,11 @@
 import random
 
 from pygame.font import Font
+from pygame.sprite import Sprite
+
 from line import Line
 from player import *
 
-RESOLUTION = (800, 600)
 DISPLAY_MODE_FLAGS = pygame.DOUBLEBUF
 # DISPLAY_MODE_FLAGS = pygame.DOUBLEBUF|pygame.FULLSCREEN
 
@@ -21,19 +22,16 @@ clock = pygame.time.Clock()
 screen = pygame.display.set_mode(RESOLUTION, DISPLAY_MODE_FLAGS, vsync=1)
 pygame.display.set_caption('Jumping Jack')
 
-font = Font('fonts/Konsystem.ttf', 30)
-
-# load images
-# bg_img = pygame.image.load('img/background.png')
+font = Font('fonts/RetroGaming.ttf', 10*SCALE_FACTOR_Y)
 
 # hidle animation
 hidle_anim = Animation2D(True)
-pausa1 = pygame.image.load('img/idle1.png')
-pausa2 = pygame.image.load('img/idle2.png')
-pausa3 = pygame.image.load('img/idle3.png')
-pausa1 = pygame.transform.scale(pausa1, SCALE_SIZE)
-pausa2 = pygame.transform.scale(pausa2, SCALE_SIZE)
-pausa3 = pygame.transform.scale(pausa3, SCALE_SIZE)
+pausa1 = pygame.image.load('img/player/idle1.png')
+pausa2 = pygame.image.load('img/player/idle2.png')
+pausa3 = pygame.image.load('img/player/idle3.png')
+pausa1 = pygame.transform.scale(pausa1, SCALED_PLAYER_SIZE)
+pausa2 = pygame.transform.scale(pausa2, SCALED_PLAYER_SIZE)
+pausa3 = pygame.transform.scale(pausa3, SCALED_PLAYER_SIZE)
 hidle_anim.loop = True
 hidle_anim.speed = 1
 hidle_anim.add_frame(AnimFrame2D(pausa1, 0.75))
@@ -45,8 +43,8 @@ hidle_anim.add_frame(AnimFrame2D(pausa3, 0.75))
 walk_anim_right = Animation2D(True)
 walk_anim_left = Animation2D(True)
 for num in range(1, 5):
-    frame = pygame.image.load(f'img/walk{num}.png')
-    frame = pygame.transform.scale(frame, SCALE_SIZE)
+    frame = pygame.image.load(f'img/player/walk{num}.png')
+    frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
     walk_anim_right.add_frame(AnimFrame2D(frame, 0.05))
     frame = pygame.transform.flip(frame, True, False)
     walk_anim_left.add_frame(AnimFrame2D(frame, 0.05))
@@ -58,22 +56,22 @@ walk_anim_left.speed = 1
 # jump animation
 jump_anim = Animation2D(True)
 for num in range(1, 4):
-    frame = pygame.image.load(f'img/jump{num}.png')
-    frame = pygame.transform.scale(frame, SCALE_SIZE)
+    frame = pygame.image.load(f'img/player/jump{num}.png')
+    frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
     jump_anim.add_frame(AnimFrame2D(frame, 0.05))
 
 # electrified animation
 electrified_anim = Animation2D(True)
 for num in range(1, 3):
-    frame = pygame.image.load(f'img/stunned{num}.png')
-    frame = pygame.transform.scale(frame, SCALE_SIZE)
+    frame = pygame.image.load(f'img/player/stunned{num}.png')
+    frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
     electrified_anim.add_frame(AnimFrame2D(frame, 0.50))
 
 # stunned animation
 stunned_anim = Animation2D(True)
 for num in range(3, 7):
-    frame = pygame.image.load(f'img/stunned{num}.png')
-    frame = pygame.transform.scale(frame, SCALE_SIZE)
+    frame = pygame.image.load(f'img/player/stunned{num}.png')
+    frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
     stunned_anim.add_frame(AnimFrame2D(frame, 0.05))
     stunned_anim.loop = True
 
@@ -85,7 +83,10 @@ player.add_animation("jump", jump_anim)
 player.add_animation("electrified", electrified_anim)
 player.add_animation("stunned", stunned_anim)
 player.set_animation(hidle_anim)
-player.set_position(383, 550 - SCALED_PLAYER_HEIGHT + 1)  # posizione iniziale 511 bottom
+player.set_position(383, 176*SCALE_FACTOR_Y)  # posizione iniziale
+
+lifeFrame = pygame.image.load(f'img/life.png')
+lifeFrame = pygame.transform.scale(lifeFrame, SCALED_LIFE_SIZE)
 
 # sprites groups
 Game.instance().sprite_group[GROUP_BCKGRND] = pygame.sprite.Group()
@@ -94,14 +95,23 @@ Game.instance().sprite_group[GROUP_PLAYER] = pygame.sprite.Group()
 
 # lines
 for i in range(0, 8):
-    print(f'linea {i}: {70 + i * LINES_DISTANCE}')
-    linea = Line(L_SCREEN_EDGE, 70 + i * LINES_DISTANCE)
+    linea = Line(i)
     Game.instance().line_list.append(linea)
     Game.instance().sprite_group[GROUP_BCKGRND].add(linea)
 
 # spawns 2 holes and place them inside GROUP_BCKGRND
-Game.instance().spawn_hole(400, 130, HOLE_SPEED, Game.instance().sprite_group[GROUP_BCKGRND])
-Game.instance().spawn_hole(400, 130, -HOLE_SPEED, Game.instance().sprite_group[GROUP_BCKGRND])
+line1_y = Game.instance().line_list[1].rect.y
+Game.instance().spawn_hole(128*SCALE_FACTOR_X, line1_y,  SCALED_HOLE_SPEED, Game.instance().sprite_group[GROUP_BCKGRND])
+Game.instance().spawn_hole(128*SCALE_FACTOR_X, line1_y, -SCALED_HOLE_SPEED, Game.instance().sprite_group[GROUP_BCKGRND])
+
+# lives
+for num in range(LIVES):
+    life = Sprite()
+    life.rect = Rect(((L_SCREEN_EDGE + (num*8)) * SCALE_FACTOR_X,
+                      176*SCALE_FACTOR_Y), (lifeFrame.get_width(), lifeFrame.get_height()))
+    life.image = lifeFrame
+    Game.instance().lives_list.append(life)
+    Game.instance().sprite_group[GROUP_BCKGRND].add(life)
 
 Game.instance().sprite_group[GROUP_PLAYER].add(player)
 
@@ -116,8 +126,8 @@ while run:
     screen.fill(game.bg_color)
 
     # draw score
-    font_surface = font.render(f"SC{Game.instance().score:05d}", False, (162, 27, 159))
-    screen.blit(font_surface, (600, 510))
+    font_surface = font.render(f"SC{Game.instance().score:05d}", False, SCORE_COLOR)
+    screen.blit(font_surface, (197*SCALE_FACTOR_X, 174*SCALE_FACTOR_Y))
 
     # update sprites
     dt = clock.get_time() / 1000
