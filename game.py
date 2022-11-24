@@ -1,9 +1,18 @@
 import pygame
+import pygame.gfxdraw
 import hole
 import player
 import line
 import game_objects
 from globals import *
+
+
+def b2x(bx):
+    return bx * 8 * SCALE_FACTOR_X
+
+
+def b2y(by):
+    return by * 8 * SCALE_FACTOR_Y
 
 
 # Singleton class
@@ -24,9 +33,9 @@ class Game:
 
         self.lives = LIVES
         self.score = 0
-        self.level = 1
+        self.level = 0
 
-        self.font = pygame.font.Font('fonts/zxspectr.ttf', 8)
+        self.font = pygame.font.Font('fonts/zxspectr.ttf', int(8 * SCALE_FACTOR_X))
         self.state = None
         self.new_state = None
 
@@ -46,7 +55,7 @@ class Game:
         for num in range(self.lives):
             life = pygame.sprite.Sprite()
             life.rect = pygame.rect.Rect(((L_SCREEN_EDGE + (num * 8)) * SCALE_FACTOR_X, 176 * SCALE_FACTOR_Y),
-                             (life_frame.get_width(), life_frame.get_height()))
+                                         (life_frame.get_width(), life_frame.get_height()))
             life.image = life_frame
             self.life_list.append(life)
             self.sprite_group[GROUP_HUD].add(life)
@@ -83,8 +92,8 @@ class Game:
     #
     # ===================================================================================================
     def run(self):
-        # self.change_state(PlayingState())
-        self.change_state(LevelUpState())
+        self.change_state(PlayingState())
+        # self.change_state(LevelUpState())
 
         run = True
         while run:
@@ -200,7 +209,7 @@ class PlayingState(GameState):
         p.set_animation(hidle_anim)
         # starting position
         p.set_position((ORIGINAL_RESOLUTION[0] - ORIGINAL_PLAYER_SIZE[0]) / 2 * SCALE_FACTOR_X,
-                            176 * SCALE_FACTOR_Y)
+                       176 * SCALE_FACTOR_Y)
         game.sprite_group[GROUP_PLAYER].add(p)
 
         # create floors
@@ -218,9 +227,6 @@ class PlayingState(GameState):
     def update(self, game):
         # draw score
         font_surface = game.font.render(f"SC{Game.instance().score:05d}", False, SCORE_COLOR)
-        font_surface = pygame.transform.scale(font_surface,
-                                              (font_surface.get_width() * SCALE_FACTOR_X,
-                                               font_surface.get_height() * SCALE_FACTOR_Y))
         w = font_surface.get_width()
         game.screen.blit(font_surface, (SCALED_R_SCREEN_EDGE - w, 176 * SCALE_FACTOR_Y))
 
@@ -256,25 +262,82 @@ class LevelUpState(GameState):
     def __init__(self):
         super().__init__()
         self.clock = None
-        self.total_elapsed = 0
+        self.start_time = 0
+        self.current_time = 0
+        self.level_title = [
+            ['Jumping Jack is quick and bold', 'With skill his story will unfold'],
+            ['THE BALLAD OF JUMPING JACK', 'A daring explorer named Jack...'],
+            ['Once found a peculiar track...', ''],
+            ['There were dangers galore...', ''],
+            ['Even holes in the floor...', ''],
+            ['So he kept falling flat on', 'his back...'],
+            ['Quite soon he got used to', 'the place...'],
+            ['He could jump to escape from', 'the chase...'],
+            ['But without careful thought...', ''],
+            ['His leaps came to nought...', ''],
+            ['And he left with a much', 'wider face...'],
+            ['Things seemed just as bad as', 'could be...'],
+            ['Hostile faces were all Jack', 'could see...'],
+            ['He tried to stay calm...', ''],
+            ['And to come to no harm...', ''],
+            ['But more often got squashed', 'like a flea...'],
+            ['By now Jack was in a', 'great flap...'],
+            ['He felt like a rat in a trap...', ''],
+            ['If only he''d guessed...', ''],
+            ['That soon he could rest...', ''],
+            ['After jumping the very', 'last gap.      - WELL DONE']
+        ]
+
+        self.rhyme = ['', '']
+        self.rhyme_part_idx = 0
+        self.rhyme_idx = [0, 0]
+        self.rhyme_end = False
 
     def enter(self, game):
         self.clock = pygame.time.Clock()
-        game.set_bg_color((255, 255, 0))
+        game.level += 1
+        game.set_bg_color(COLOR_BASIC_YELLOW)
 
     def update(self, game):
-        self.total_elapsed += self.clock.tick()
+        self.current_time += self.clock.tick()
+        if (self.current_time - self.start_time > 125) and not self.rhyme_end:
+            self.start_time = self.current_time
 
-        if self.total_elapsed > 2000:
+            self.rhyme = self.level_title[game.level - 1]
+            rhyme_item = self.rhyme[self.rhyme_part_idx]
+            self.rhyme_idx[self.rhyme_part_idx] += 1
+            if self.rhyme_idx[self.rhyme_part_idx] >= len(rhyme_item):
+                self.rhyme_idx[self.rhyme_part_idx] = len(rhyme_item)
+                self.rhyme_part_idx += 1
+                if self.rhyme_part_idx > 1:
+                    self.rhyme_end = True
+
+        # original size of ZX Spectrum screen: (256, 192)
+        # 8x8 blocks: (32, 24)
+        pygame.gfxdraw.box(game.screen, (b2x(9), b2y(2), b2x(16), b2y(3)), COLOR_BASIC_GREEN)
+        font_surface = game.font.render(f'JUMPING JACK', False, COLOR_BASIC_BLACK)
+        game.screen.blit(font_surface, (b2x(11), b2y(3)))
+
+        pygame.gfxdraw.box(game.screen, (b2x(2), b2y(8), b2x(28), b2y(3)), COLOR_BRIGHT_WHITE)
+        txt = f'NEXT LEVEL - {game.level:>2}  HAZARDS'
+        x = len(txt)
+        if game.level == 1:
+            x -= 1
+        font_surface = game.font.render(txt[:x], False, COLOR_BASIC_BLUE)
+        game.screen.blit(font_surface, (b2x(4), b2y(9)))
+
+        txt = self.rhyme[0][:self.rhyme_idx[0]]
+        font_surface = game.font.render(f'{txt}', False, COLOR_BASIC_BLUE)
+        game.screen.blit(font_surface, (b2x(0), b2y(16)))
+
+        if self.rhyme_idx[1] > 0:
+            txt = self.rhyme[1][:self.rhyme_idx[1]]
+            font_surface = game.font.render(f'{txt}', False, COLOR_BASIC_BLUE)
+            game.screen.blit(font_surface, (b2x(0), b2y(18)))
+
+        if self.rhyme_end and (self.current_time - self.start_time > 2000):
             game.change_state(PlayingState())
             return
-
-        font_surface = game.font.render(f"NEXT LEVEL -  1   HAZARD", False, (0, 0, 255))
-        font_surface = pygame.transform.scale(font_surface,
-                                              (font_surface.get_width() * SCALE_FACTOR_X,
-                                               font_surface.get_height() * SCALE_FACTOR_Y))
-        w = font_surface.get_width()
-        game.screen.blit(font_surface, (32 * SCALE_FACTOR_X, 92 * SCALE_FACTOR_Y))
 
     def exit(self, game):
         pass

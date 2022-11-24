@@ -54,8 +54,8 @@ class Player(ZSprite):
         return False
 
     def has_hole_down(self):
-        for hole in game.Game.instance().hole_list:
-            rect = hole.rect
+        for the_hole in game.Game.instance().hole_list:
+            rect = the_hole.rect
             if abs(self.rect.bottom - rect.y) <= 1:
                 if self.rect.x > rect.x and self.rect.right < rect.right:
                     return True
@@ -148,6 +148,8 @@ class JumpingState(PlayerState):
         if self.has_hole_up:
             if player.line_idx == 0 and player.y <= game.Game.instance().line_list[0].rect.y:
                 game.Game.instance().level_up()
+                pygame.time.delay(1000)
+                return
 
             if player.y <= player.next_jump_y:
                 player.y = player.next_jump_y
@@ -175,7 +177,7 @@ class FallingState(PlayerState):
         if player.y >= player.next_fallen_y:
             player.y = player.next_fallen_y
             player.next_fallen_y = player.y + 24 * SCALE_FACTOR_Y
-            player.line_idx = player.line_idx + 1
+            player.line_idx += 1
             player.change_state(StunnedState())
 
 

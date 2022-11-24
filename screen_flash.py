@@ -33,7 +33,7 @@ class ScreenFlash:
                 if self.next_color_idx > 1:
                     self.next_color_idx = 0
                 game.Game.instance().set_bg_color(self.colors[self.next_color_idx])
-                self.counter = self.counter + 1
+                self.counter += 1
                 if self.counter >= self.times:
                     self.stop()
 
