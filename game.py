@@ -1,18 +1,12 @@
 import pygame
 import pygame.gfxdraw
+
+import enemy
 import hole
 import player
 import line
 import game_objects
 from globals import *
-
-
-def b2x(bx):
-    return bx * 8 * SCALE_FACTOR_X
-
-
-def b2y(by):
-    return by * 8 * SCALE_FACTOR_Y
 
 
 # Singleton class
@@ -28,12 +22,13 @@ class Game:
         self.line_list = []
         self.hole_list = []
         self.life_list = []
+        self.enemy_list = []
         self.sprite_group = {GROUP_BCKGRND: pygame.sprite.Group(), GROUP_HUD: pygame.sprite.Group(),
                              GROUP_ENEMIES: pygame.sprite.Group(), GROUP_PLAYER: pygame.sprite.Group()}
 
         self.lives = LIVES
         self.score = 0
-        self.level = 0
+        self.hazard = 10  # level start from 0 (with no hazards) and runs until 20
 
         self.font = pygame.font.Font('fonts/zxspectr.ttf', int(8 * SCALE_FACTOR_X))
         self.state = None
@@ -76,6 +71,7 @@ class Game:
             self.state.enter(self)
 
         if self.state is not None:
+            self.state.handle_input(self)
             self.state.update(self)
 
         if self.new_state is not None:
@@ -92,8 +88,7 @@ class Game:
     #
     # ===================================================================================================
     def run(self):
-        self.change_state(PlayingState())
-        # self.change_state(LevelUpState())
+        self.change_state(MenuState())
 
         run = True
         while run:
@@ -143,70 +138,13 @@ class PlayingState(GameState):
         super().__init__()
 
     def enter(self, game):
-        # hidle animation
-        hidle_anim = game_objects.Animation2D(True)
-        pausa1 = pygame.image.load('img/player/idle1.png')
-        pausa2 = pygame.image.load('img/player/idle2.png')
-        pausa3 = pygame.image.load('img/player/idle3.png')
-        pausa1 = pygame.transform.scale(pausa1, SCALED_PLAYER_SIZE)
-        pausa2 = pygame.transform.scale(pausa2, SCALED_PLAYER_SIZE)
-        pausa3 = pygame.transform.scale(pausa3, SCALED_PLAYER_SIZE)
-        hidle_anim.loop = True
-        hidle_anim.speed = 1
-        hidle_anim.add_frame(game_objects.AnimFrame2D(pausa1, 0.75))
-        hidle_anim.add_frame(game_objects.AnimFrame2D(pausa2, 0.75))
-        hidle_anim.add_frame(game_objects.AnimFrame2D(pausa1, 0.75))
-        hidle_anim.add_frame(game_objects.AnimFrame2D(pausa3, 0.75))
-
-        # walk animation
-        walk_anim_right = game_objects.Animation2D(True)
-        walk_anim_left = game_objects.Animation2D(True)
-        for num in range(1, 5):
-            frame = pygame.image.load(f'img/player/walk{num}.png')
-            frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
-            walk_anim_right.add_frame(game_objects.AnimFrame2D(frame, 0.05))
-            frame = pygame.transform.flip(frame, True, False)
-            walk_anim_left.add_frame(game_objects.AnimFrame2D(frame, 0.05))
-        walk_anim_right.loop = True
-        walk_anim_right.speed = 1
-        walk_anim_left.loop = True
-        walk_anim_left.speed = 1
-
-        # jump animation
-        jump_anim = game_objects.Animation2D(True)
-        for num in range(1, 4):
-            frame = pygame.image.load(f'img/player/jump{num}.png')
-            frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
-            jump_anim.add_frame(game_objects.AnimFrame2D(frame, 0.05))
-
-        # electrified animation
-        electrified_anim = game_objects.Animation2D(True)
-        for num in range(1, 3):
-            frame = pygame.image.load(f'img/player/stunned{num}.png')
-            frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
-            electrified_anim.add_frame(game_objects.AnimFrame2D(frame, 0.50))
-
-        # stunned animation
-        stunned_anim = game_objects.Animation2D(True)
-        for num in range(3, 7):
-            frame = pygame.image.load(f'img/player/stunned{num}.png')
-            frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
-            stunned_anim.add_frame(game_objects.AnimFrame2D(frame, 0.05))
-            stunned_anim.loop = True
-
         life_frame = pygame.image.load(f'img/life.png')
         life_frame = pygame.transform.scale(life_frame, SCALED_LIFE_SIZE)
         game.surfaces["life"] = life_frame
 
         # create player
         p = player.Player()
-        p.add_animation("hidle", hidle_anim)
-        p.add_animation("walk_right", walk_anim_right)
-        p.add_animation("walk_left", walk_anim_left)
-        p.add_animation("jump", jump_anim)
-        p.add_animation("electrified", electrified_anim)
-        p.add_animation("stunned", stunned_anim)
-        p.set_animation(hidle_anim)
+
         # starting position
         p.set_position((ORIGINAL_RESOLUTION[0] - ORIGINAL_PLAYER_SIZE[0]) / 2 * SCALE_FACTOR_X,
                        176 * SCALE_FACTOR_Y)
@@ -215,13 +153,20 @@ class PlayingState(GameState):
         # create floors
         game.create_floors()
 
-        # spawns 2 holes and place them inside GROUP_BCKGRND
+        # spawns 2 holes
         line1_y = game.line_list[1].rect.y
-        hole.spawn_hole(128 * SCALE_FACTOR_X, line1_y, SCALED_HOLE_SPEED, game.sprite_group[GROUP_BCKGRND])
-        hole.spawn_hole(128 * SCALE_FACTOR_X, line1_y, -SCALED_HOLE_SPEED, game.sprite_group[GROUP_BCKGRND])
+        hole.spawn_hole(o2x(128), line1_y, SCALED_HOLE_SPEED, game.sprite_group[GROUP_BCKGRND])
+        hole.spawn_hole(o2x(128), line1_y, -SCALED_HOLE_SPEED, game.sprite_group[GROUP_BCKGRND])
+
+        # spawns enemies
+        if game.hazard > 0:
+            for i in range(game.hazard):
+                enemy.spawn_random_enemy(game.sprite_group[GROUP_ENEMIES])
 
         # create lives
         game.create_lives()
+
+        # set background color
         game.set_bg_color(BACKGROUND_COLOR)
 
     def update(self, game):
@@ -295,7 +240,7 @@ class LevelUpState(GameState):
 
     def enter(self, game):
         self.clock = pygame.time.Clock()
-        game.level += 1
+        game.hazard += 1
         game.set_bg_color(COLOR_BASIC_YELLOW)
 
     def update(self, game):
@@ -303,7 +248,7 @@ class LevelUpState(GameState):
         if (self.current_time - self.start_time > 125) and not self.rhyme_end:
             self.start_time = self.current_time
 
-            self.rhyme = self.level_title[game.level - 1]
+            self.rhyme = self.level_title[game.hazard - 1]
             rhyme_item = self.rhyme[self.rhyme_part_idx]
             self.rhyme_idx[self.rhyme_part_idx] += 1
             if self.rhyme_idx[self.rhyme_part_idx] >= len(rhyme_item):
@@ -319,9 +264,9 @@ class LevelUpState(GameState):
         game.screen.blit(font_surface, (b2x(11), b2y(3)))
 
         pygame.gfxdraw.box(game.screen, (b2x(2), b2y(8), b2x(28), b2y(3)), COLOR_BRIGHT_WHITE)
-        txt = f'NEXT LEVEL - {game.level:>2}  HAZARDS'
+        txt = f'NEXT LEVEL - {game.hazard:>2}  HAZARDS'
         x = len(txt)
-        if game.level == 1:
+        if game.hazard == 1:
             x -= 1
         font_surface = game.font.render(txt[:x], False, COLOR_BASIC_BLUE)
         game.screen.blit(font_surface, (b2x(4), b2y(9)))
@@ -343,9 +288,43 @@ class LevelUpState(GameState):
         pass
 
 
+class MenuState(GameState):
+    def __init__(self):
+        super().__init__()
+
+    def enter(self, game):
+        game.set_bg_color(COLOR_BASIC_YELLOW)
+
+    def handle_input(self, game):
+        key = pygame.key.get_pressed()
+
+        if key[pygame.K_RETURN]:
+            game.change_state(PlayingState())
+
+    def update(self, game):
+        # original size of ZX Spectrum screen: (256, 192)
+        # 8x8 blocks: (32, 24)
+        pygame.gfxdraw.box(game.screen, (b2x(8), b2y(2), b2x(16), b2y(3)), COLOR_BASIC_GREEN)
+        font_surface = game.font.render(f'JUMPING JACK', False, COLOR_BASIC_BLACK)
+        game.screen.blit(font_surface, (b2x(10), b2y(3)))
+
+        pygame.gfxdraw.box(game.screen, (b2x(5), b2y(8), b2x(22), b2y(5)), COLOR_BASIC_CYAN)
+
+        txt = f'FINAL SCORE  {game.score:05}'
+        font_surface = game.font.render(txt, False, COLOR_BASIC_BLACK)
+        game.screen.blit(font_surface, (b2x(7), b2y(9)))
+
+        txt = f'WITH  {game.hazard:>2}  HAZARDS'
+        font_surface = game.font.render(txt, False, COLOR_BASIC_BLACK)
+        game.screen.blit(font_surface, (b2x(8), b2y(11)))
+
+        txt = 'Press ENTER to replay'
+        font_surface = game.font.render(txt, False, COLOR_BASIC_BLUE)
+        game.screen.blit(font_surface, (b2x(5), b2y(21)))
+
+
 # ===================================================================================================
 # GameOverState
 # ===================================================================================================
 class GameOverState(GameState):
-    def __init__(self):
-        super().__init__()
+    pass

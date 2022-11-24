@@ -1,11 +1,12 @@
+import pygame
 import game
 import hole
-from game_objects import *
+import game_objects
 from globals import *
 from screen_flash import ScreenFlash
 
 
-class Player(ZSprite):
+class Player(game_objects.ZSprite):
     def __init__(self):
         super().__init__()
         self.state = HidleState()
@@ -14,6 +15,66 @@ class Player(ZSprite):
         self.next_fallen_y = 0
         # idx of line just above head
         self.line_idx = 7
+
+        # hidle animation
+        hidle_anim = game_objects.Animation2D(True)
+        pausa1 = pygame.image.load('img/player/idle1.png')
+        pausa2 = pygame.image.load('img/player/idle2.png')
+        pausa3 = pygame.image.load('img/player/idle3.png')
+        pausa1 = pygame.transform.scale(pausa1, SCALED_PLAYER_SIZE)
+        pausa2 = pygame.transform.scale(pausa2, SCALED_PLAYER_SIZE)
+        pausa3 = pygame.transform.scale(pausa3, SCALED_PLAYER_SIZE)
+        hidle_anim.loop = True
+        hidle_anim.speed = 1
+        hidle_anim.add_frame(game_objects.AnimFrame2D(pausa1, 0.75))
+        hidle_anim.add_frame(game_objects.AnimFrame2D(pausa2, 0.75))
+        hidle_anim.add_frame(game_objects.AnimFrame2D(pausa1, 0.75))
+        hidle_anim.add_frame(game_objects.AnimFrame2D(pausa3, 0.75))
+
+        # walk animation
+        walk_anim_right = game_objects.Animation2D(True)
+        walk_anim_left = game_objects.Animation2D(True)
+        for num in range(1, 5):
+            frame = pygame.image.load(f'img/player/walk{num}.png')
+            frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
+            walk_anim_right.add_frame(game_objects.AnimFrame2D(frame, 0.05))
+            frame = pygame.transform.flip(frame, True, False)
+            walk_anim_left.add_frame(game_objects.AnimFrame2D(frame, 0.05))
+        walk_anim_right.loop = True
+        walk_anim_right.speed = 1
+        walk_anim_left.loop = True
+        walk_anim_left.speed = 1
+
+        # jump animation
+        jump_anim = game_objects.Animation2D(True)
+        for num in range(1, 4):
+            frame = pygame.image.load(f'img/player/jump{num}.png')
+            frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
+            jump_anim.add_frame(game_objects.AnimFrame2D(frame, 0.05))
+
+        # electrified animation
+        electrified_anim = game_objects.Animation2D(True)
+        for num in range(1, 3):
+            frame = pygame.image.load(f'img/player/stunned{num}.png')
+            frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
+            electrified_anim.add_frame(game_objects.AnimFrame2D(frame, 0.50))
+
+        # stunned animation
+        stunned_anim = game_objects.Animation2D(True)
+        for num in range(3, 7):
+            frame = pygame.image.load(f'img/player/stunned{num}.png')
+            frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
+            stunned_anim.add_frame(game_objects.AnimFrame2D(frame, 0.05))
+            stunned_anim.loop = True
+
+        self.add_animation("hidle", hidle_anim)
+        self.add_animation("walk_right", walk_anim_right)
+        self.add_animation("walk_left", walk_anim_left)
+        self.add_animation("jump", jump_anim)
+        self.add_animation("electrified", electrified_anim)
+        self.add_animation("stunned", stunned_anim)
+
+        self.set_animation(hidle_anim)
 
     def update(self, *args, **kwargs):
         if self.new_state is not None:
@@ -94,11 +155,12 @@ class HidleState(PlayerState):
 
         if key[pygame.K_LEFT] or key[pygame.K_RIGHT]:
             player.change_state(WalkingState())
-            return
 
         if key[pygame.K_UP]:
             player.change_state(JumpingState())
-            return
+
+        # if key[pygame.K_e]:
+        #    enemy.spawn_random_enemy(game.Game.instance().sprite_group[GROUP_ENEMIES])
 
     def update(self, player, *args, **kwargs):
         if player.has_hole_down():

@@ -38,16 +38,13 @@ class ZSprite(pygame.sprite.Sprite):
 
     def set_x(self, x):
         self.x = x
-        # self.rect.update(self.x, self.y, self.rect.width, self.rect.height)
 
     def set_y(self, y):
         self.y = y
-        # self.rect.update(self.x, self.y, self.rect.width, self.rect.height)
 
     def move(self, dx=0.0, dy=0.0):
         self.x += dx
         self.y += dy
-        # self.rect.update(self.x, self.y, self.rect.width, self.rect.height)
 
     def set_frame(self, frame):
         self.image = frame.image

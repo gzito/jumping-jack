@@ -11,7 +11,7 @@ ORIGINAL_BLOCKS = (32, 24)
 # original size of sprites
 ORIGINAL_PLAYER_SIZE = (16, 16)
 ORIGINAL_LIFE_SIZE = (8, 8)
-ORIGINAL_ENEMIES_SIZE = (24, 16)
+ORIGINAL_ENEMY_SIZE = (24, 16)
 
 # scale factors
 SCALE_FACTOR_X = RESOLUTION[0] / ORIGINAL_RESOLUTION[0]
@@ -49,6 +49,14 @@ SCALED_HOLE_WIDTH = HOLE_WIDTH * SCALE_FACTOR_X
 HOLE_SPEED = 1.5
 SCALED_HOLE_SPEED = HOLE_SPEED * SCALE_FACTOR_X
 
+# enemies
+SCALED_ENEMY_SIZE = (ORIGINAL_ENEMY_SIZE[0] * SCALE_FACTOR_X, ORIGINAL_ENEMY_SIZE[1] * SCALE_FACTOR_Y)
+ENEMY_SPEED = 1.5
+SCALED_ENEMY_SPEED = ENEMY_SPEED * SCALE_FACTOR_X
+ENEMY_WIDTH = 24
+SCALED_ENEMY_WIDTH = ENEMY_WIDTH * SCALE_FACTOR_X
+
+# colors
 COLOR_BASIC_BLACK = (0, 0, 0)
 COLOR_BASIC_BLUE = (0, 0, 215)
 COLOR_BASIC_RED = (215, 0, 0)
@@ -74,6 +82,7 @@ LINE_COLOR = COLOR_BASIC_RED
 SCORE_COLOR = COLOR_BASIC_MAGENTA
 
 # miscellaneous
+MAX_HAZARDS = 20
 MAX_HOLES = 8  # max 8 holes - spawns 1 hole every time the player gets up one line
 LIVES = 6
 
@@ -81,3 +90,20 @@ GROUP_BCKGRND = "bg"
 GROUP_HUD = "hud"
 GROUP_ENEMIES = "enemies"
 GROUP_PLAYER = "player"
+
+
+# global functions
+def b2x(bx):
+    return bx * 8 * SCALE_FACTOR_X
+
+
+def b2y(by):
+    return by * 8 * SCALE_FACTOR_Y
+
+
+def o2x(ox):
+    return ox * SCALE_FACTOR_X
+
+
+def o2y(oy):
+    return oy * SCALE_FACTOR_Y
