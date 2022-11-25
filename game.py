@@ -158,7 +158,7 @@ class Game:
     #
     # ===================================================================================================
     def run(self):
-        self.change_state(MenuState())
+        self.change_state(LoaderState())
 
         run = True
         while run:
@@ -433,5 +433,24 @@ class MenuState(GameState):
 # ===================================================================================================
 # GameOverState
 # ===================================================================================================
-class GameOverState(GameState):
-    pass
+class LoaderState(GameState):
+    def __init__(self):
+        super().__init__()
+        self.clock = pygame.time.Clock()
+        self.elaped_ms = 0
+
+    def enter(self, game):
+        frame = pygame.image.load(f'img/loader.gif')
+        frame = pygame.transform.scale(frame, (RESOLUTION[0], RESOLUTION[1]))
+        game.add_surface('intro', frame)
+
+    def update(self, game):
+        self.clock.tick()
+        self.elaped_ms += self.clock.get_time()
+        game.screen.blit(game.get_surface('intro'), (0, 0))
+        if self.elaped_ms > 3000:
+            game.change_state(MenuState())
+
+    def exit(self, game):
+        game.del_surface('intro')
+
