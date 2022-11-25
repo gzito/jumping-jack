@@ -160,8 +160,13 @@ class HidleState(PlayerState):
             player.change_state(JumpingState())
 
     def update(self, player, *args, **kwargs):
-        if player.has_hole_down():
-            player.change_state(FallingState())
+        if not CHEAT_HAZARD_IMMUNITY:
+            if pygame.sprite.spritecollideany(player,game.Game.instance().sprite_group[GROUP_HAZARDS]) is not None:
+                player.change_state(HazardHitState())
+
+        if not CHEAT_HOLES_IMMUNITY:
+            if player.has_hole_down():
+                player.change_state(FallingState())
 
 
 class WalkingState(PlayerState):
@@ -187,8 +192,13 @@ class WalkingState(PlayerState):
         else:
             player.set_animation(player.animations["walk_left"])
 
-        if player.has_hole_down():
-            player.change_state(FallingState())
+        if not CHEAT_HAZARD_IMMUNITY:
+            if pygame.sprite.spritecollideany(player,game.Game.instance().sprite_group[GROUP_HAZARDS]) is not None:
+                player.change_state(HazardHitState())
+
+        if not CHEAT_HOLES_IMMUNITY:
+            if player.has_hole_down():
+                player.change_state(FallingState())
 
 
 class JumpingState(PlayerState):
@@ -204,7 +214,7 @@ class JumpingState(PlayerState):
     def update(self, player, dt):
         player.move(0, -1.5 * SCALE_FACTOR_Y)
 
-        if self.has_hole_up:
+        if self.has_hole_up or CHEAT_JUMP_IMMUNITY:
             if player.line_idx == 0 and player.y <= game.Game.instance().line_list[0].rect.y:
                 game.Game.instance().level_up()
                 pygame.time.delay(1000)
@@ -240,10 +250,27 @@ class FallingState(PlayerState):
             player.change_state(StunnedState())
 
 
+class HazardHitState(PlayerState):
+    def __init__(self):
+        super().__init__()
+        self.flash = ScreenFlash(BACKGROUND_COLOR, FLASH_COLOR_HAZARD_HIT, 250, 2)
+
+    def enter(self, player):
+        self.flash.start()
+
+    def exit(self, player):
+        self.flash.stop()
+
+    def update(self, player, dt):
+        self.flash.update()
+        if not self.flash.is_enabled():
+            player.change_state(StunnedState())
+
+
 class ElectricfiedState(PlayerState):
     def __init__(self):
         super().__init__()
-        self.flash = ScreenFlash(BACKGROUND_COLOR, FLASH_COLOR, 200, 3)
+        self.flash = ScreenFlash(BACKGROUND_COLOR, FLASH_COLOR_FLOOR_HIT, 200, 3)
 
     def enter(self, player):
         player.set_animation(player.animations["electrified"])
@@ -267,8 +294,9 @@ class StunnedState(PlayerState):
         player.set_animation(player.animations["stunned"])
 
     def exit(self, player):
-        if player.line_idx == 7:
-            game.Game().instance().decrement_lives()
+        if not CHEAT_INFINITE_LIVES:
+            if player.line_idx == 7:
+                game.Game().instance().decrement_lives()
 
     def update(self, player, dt):
         if player.has_hole_down():
@@ -277,7 +305,3 @@ class StunnedState(PlayerState):
         if player.get_animation().current_time > 1:
             player.change_state(HidleState())
 
-
-class DeadState(PlayerState):
-    def __init__(self):
-        super().__init__()

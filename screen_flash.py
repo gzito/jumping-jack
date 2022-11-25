@@ -13,19 +13,19 @@ class ScreenFlash:
         self.clock = None
         self.start_ms = 0
         self.current_ms = 0
-        self.is_enabled = False
+        self.__is_enabled = False
 
     def start(self):
         self.clock = Clock()
         self.start_ms = 0
         self.current_ms = 0
-        self.is_enabled = True
+        self.__is_enabled = True
         self.counter = 0
         self.next_color_idx = 1
         game.Game.instance().set_bg_color(self.colors[self.next_color_idx])
 
     def update(self):
-        if self.is_enabled:
+        if self.__is_enabled:
             self.current_ms += self.clock.tick()
             if self.current_ms - self.start_ms >= self.duration_ms:
                 self.start_ms = self.current_ms
@@ -39,4 +39,7 @@ class ScreenFlash:
 
     def stop(self):
         game.Game.instance().set_bg_color(self.colors[0])
-        self.is_enabled = False
+        self.__is_enabled = False
+
+    def is_enabled(self):
+        return self.__is_enabled

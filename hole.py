@@ -39,10 +39,15 @@ class Hole(game_objects.ZSprite):
             surface.fill(BACKGROUND_COLOR)
             Hole.color_dict_[BACKGROUND_COLOR] = surface
 
-        if FLASH_COLOR not in Hole.color_dict_:
+        if FLASH_COLOR_FLOOR_HIT not in Hole.color_dict_:
             surface = pygame.surface.Surface((SCALED_HOLE_WIDTH, SCALED_LINE_THICKNESS))
-            surface.fill(FLASH_COLOR)
-            Hole.color_dict_[FLASH_COLOR] = surface
+            surface.fill(FLASH_COLOR_FLOOR_HIT)
+            Hole.color_dict_[FLASH_COLOR_FLOOR_HIT] = surface
+
+        if FLASH_COLOR_HAZARD_HIT not in Hole.color_dict_:
+            surface = pygame.surface.Surface((SCALED_HOLE_WIDTH, SCALED_LINE_THICKNESS))
+            surface.fill(FLASH_COLOR_HAZARD_HIT)
+            Hole.color_dict_[FLASH_COLOR_HAZARD_HIT] = surface
 
         self.current_surface = Hole.color_dict_[BACKGROUND_COLOR]
         self.surface_switched = False
