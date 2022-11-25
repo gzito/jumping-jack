@@ -32,8 +32,11 @@ class ColorFlash:
                 self.__start_ms = self.__current_ms
                 self.__next_color_idx += 1
                 if self.__next_color_idx >= len(self.__colors):
-                    self.__next_color_idx = 0
                     self.__counter += 1
+                    if self.__counter < self.__times:
+                        self.__next_color_idx = 0
+                    else:
+                        self.__next_color_idx = len(self.__colors)-1
                 if self.__counter >= self.__times:
                     self.stop()
 
@@ -41,7 +44,7 @@ class ColorFlash:
         self.__is_enabled = False
 
     def is_enabled(self):
-        return self.__is_enabled
+        return self.__is_enabled and self.__current_ms >= self.__start_delay_ms
 
     def get_current_color(self):
         retval = None

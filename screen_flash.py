@@ -1,45 +1,13 @@
-from pygame.time import Clock
+import color_flash
 
 import game
 
 
-class ScreenFlash:
-    def __init__(self, orig_color, flash_color, duration_ms, times):
-        self.colors = (orig_color, flash_color)
-        self.next_color_idx = 0
-        self.duration_ms = duration_ms
-        self.counter = 0
-        self.times = times
-        self.clock = None
-        self.start_ms = 0
-        self.current_ms = 0
-        self.__is_enabled = False
-
-    def start(self):
-        self.clock = Clock()
-        self.start_ms = 0
-        self.current_ms = 0
-        self.__is_enabled = True
-        self.counter = 0
-        self.next_color_idx = 1
-        game.Game.instance().set_bg_color(self.colors[self.next_color_idx])
+class ScreenFlash(color_flash.ColorFlash):
+    def __init__(self, color_list, duration_ms, times, start_delay_ms=0):
+        super().__init__(color_list, duration_ms, times, start_delay_ms)
 
     def update(self):
-        if self.__is_enabled:
-            self.current_ms += self.clock.tick()
-            if self.current_ms - self.start_ms >= self.duration_ms:
-                self.start_ms = self.current_ms
-                self.next_color_idx += 1
-                if self.next_color_idx > 1:
-                    self.next_color_idx = 0
-                game.Game.instance().set_bg_color(self.colors[self.next_color_idx])
-                self.counter += 1
-                if self.counter >= self.times:
-                    self.stop()
-
-    def stop(self):
-        self.__is_enabled = False
-        game.Game.instance().set_bg_color(self.colors[0])
-
-    def is_enabled(self):
-        return self.__is_enabled
+        super().update()
+        if self.is_enabled():
+            game.Game.instance().set_bg_color(self.get_current_color())

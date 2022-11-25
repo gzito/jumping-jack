@@ -2,7 +2,7 @@ import pygame
 import pygame.gfxdraw
 
 import hazard
-import hole
+import gap
 import player
 import line
 import color_flash
@@ -20,7 +20,7 @@ class Game:
         self.screen = pygame.display.get_surface()
 
         self.line_list = []
-        self.hole_list = []
+        self.gap_list = []
         self.life_list = []
         self.hazard_list = []
         self.sprite_group = {GROUP_BCKGRND: pygame.sprite.Group(), GROUP_HUD: pygame.sprite.Group(),
@@ -38,12 +38,12 @@ class Game:
 
     def set_initial_hazard_value(self):
         # level start from 0 (with no hazards) and runs until 20
-        self.hazard = 20
+        self.hazard = 1
 
     def set_bg_color(self, color):
         self.bg_color = color
-        for the_hole in self.instance().hole_list:
-            the_hole.switch_surface(color)
+        for the_gap in self.instance().gap_list:
+            the_gap.switch_surface(color)
 
     def create_floors(self):
         for i in range(8):
@@ -159,10 +159,10 @@ class PlayingState(GameState):
         # create floors
         game.create_floors()
 
-        # spawns 2 holes
+        # spawns 2 gaps
         line1_y = game.line_list[1].rect.y
-        hole.spawn_hole(o2x(128), line1_y, SCALED_HOLE_SPEED, game.sprite_group[GROUP_BCKGRND])
-        hole.spawn_hole(o2x(128), line1_y, -SCALED_HOLE_SPEED, game.sprite_group[GROUP_BCKGRND])
+        gap.spawn_gap(o2x(128), line1_y, SCALED_GAP_SPEED, game.sprite_group[GROUP_BCKGRND])
+        gap.spawn_gap(o2x(128), line1_y, -SCALED_GAP_SPEED, game.sprite_group[GROUP_BCKGRND])
 
         # spawns hazards
         if game.hazard > 0:
@@ -204,7 +204,7 @@ class PlayingState(GameState):
         game.sprite_group[GROUP_PLAYER].empty()
         game.sprite_group[GROUP_HAZARDS].empty()
         game.line_list.clear()
-        game.hole_list.clear()
+        game.gap_list.clear()
         game.life_list.clear()
         game.hazard_list.clear()
 

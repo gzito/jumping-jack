@@ -66,7 +66,7 @@ class Hazard(game_objects.ZSprite):
 
     def update(self, *args, **kwargs):
         self.move(self.speed)
-        if self.x > SCALED_R_SCREEN_EDGE or self.x <= -SCALED_HOLE_WIDTH + SCALED_L_SCREEN_EDGE:
+        if self.x > SCALED_R_SCREEN_EDGE or self.x <= -SCALED_GAP_WIDTH + SCALED_L_SCREEN_EDGE:
             self.wrap()
         super().update(*args, **kwargs)
 
