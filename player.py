@@ -159,9 +159,6 @@ class HidleState(PlayerState):
         if key[pygame.K_UP]:
             player.change_state(JumpingState())
 
-        # if key[pygame.K_e]:
-        #    enemy.spawn_random_enemy(game.Game.instance().sprite_group[GROUP_ENEMIES])
-
     def update(self, player, *args, **kwargs):
         if player.has_hole_down():
             player.change_state(FallingState())

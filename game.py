@@ -1,11 +1,10 @@
 import pygame
 import pygame.gfxdraw
 
-import enemy
+import hazard
 import hole
 import player
 import line
-import game_objects
 from globals import *
 
 
@@ -22,9 +21,9 @@ class Game:
         self.line_list = []
         self.hole_list = []
         self.life_list = []
-        self.enemy_list = []
+        self.hazard_list = []
         self.sprite_group = {GROUP_BCKGRND: pygame.sprite.Group(), GROUP_HUD: pygame.sprite.Group(),
-                             GROUP_ENEMIES: pygame.sprite.Group(), GROUP_PLAYER: pygame.sprite.Group()}
+                             GROUP_HAZARDS: pygame.sprite.Group(), GROUP_PLAYER: pygame.sprite.Group()}
 
         self.lives = LIVES
         self.score = 0
@@ -158,10 +157,11 @@ class PlayingState(GameState):
         hole.spawn_hole(o2x(128), line1_y, SCALED_HOLE_SPEED, game.sprite_group[GROUP_BCKGRND])
         hole.spawn_hole(o2x(128), line1_y, -SCALED_HOLE_SPEED, game.sprite_group[GROUP_BCKGRND])
 
-        # spawns enemies
+        # spawns hazards
         if game.hazard > 0:
             for i in range(game.hazard):
-                enemy.spawn_random_enemy(game.sprite_group[GROUP_ENEMIES])
+                if len(game.hazard_list) < MAX_HAZARDS:
+                    hazard.spawn_hazard(game.sprite_group[GROUP_HAZARDS])
 
         # create lives
         game.create_lives()
@@ -178,13 +178,13 @@ class PlayingState(GameState):
         # update sprites
         dt = game.clock.get_time() / 1000
         game.sprite_group[GROUP_BCKGRND].update(dt)
-        game.sprite_group[GROUP_ENEMIES].update(dt)
+        game.sprite_group[GROUP_HAZARDS].update(dt)
         game.sprite_group[GROUP_PLAYER].update(dt)
 
         # draw sprites
         game.sprite_group[GROUP_BCKGRND].draw(game.screen)
         game.sprite_group[GROUP_HUD].draw(game.screen)
-        game.sprite_group[GROUP_ENEMIES].draw(game.screen)
+        game.sprite_group[GROUP_HAZARDS].draw(game.screen)
         game.sprite_group[GROUP_PLAYER].draw(game.screen)
 
         # draw debug rect
@@ -194,7 +194,7 @@ class PlayingState(GameState):
         game.sprite_group[GROUP_BCKGRND].empty()
         game.sprite_group[GROUP_HUD].empty()
         game.sprite_group[GROUP_PLAYER].empty()
-        game.sprite_group[GROUP_ENEMIES].empty()
+        game.sprite_group[GROUP_HAZARDS].empty()
         game.line_list.clear()
         game.hole_list.clear()
         game.life_list.clear()
