@@ -19,6 +19,7 @@ pygame.font.init()
 screen = pygame.display.set_mode(RESOLUTION, DISPLAY_MODE_FLAGS, vsync=1)
 pygame.display.set_caption('Jumping Jack')
 
+game.Game.instance().load_resources()
 game.Game.instance().run()
 
 game.Game.destroy()

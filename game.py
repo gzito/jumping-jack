@@ -16,7 +16,7 @@ class Game:
     def __init__(self):
         self.bg_color = BACKGROUND_COLOR
         self.clock = pygame.time.Clock()
-        self.surfaces = {}
+        self.__surfaces = {}
         self.screen = pygame.display.get_surface()
 
         self.line_list = []
@@ -29,16 +29,63 @@ class Game:
         self.lives = LIVES
         self.score = 0
         self.highscore = 0
-        self.hazard = 0
+        self.hazards = 0
         self.set_initial_hazard_value()
 
-        self.font = pygame.font.Font('fonts/zxspectr.ttf', int(8 * SCALE_FACTOR_X))
+        self.font = None
+
         self.state = None
         self.new_state = None
 
+    def load_resources(self):
+        self.font = pygame.font.Font('fonts/zxspectr.ttf', int(8 * SCALE_FACTOR_X))
+
+        # life
+        life_frame = pygame.image.load(f'img/life.png')
+        life_frame = pygame.transform.scale(life_frame, SCALED_LIFE_SIZE)
+        self.add_surface('life', life_frame)
+
+        # player
+        for num in range(1, 4):
+            frame = pygame.image.load(f'img/player/idle{num}.png')
+            frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
+            self.add_surface(f'idle{num}', frame)
+
+        for num in range(1, 5):
+            frame = pygame.image.load(f'img/player/walk{num}.png')
+            frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
+            self.add_surface(f'walk_right{num}', frame)
+            frame = pygame.transform.flip(frame, True, False)
+            self.add_surface(f'walk_left{num}', frame)
+
+        for num in range(1, 4):
+            frame = pygame.image.load(f'img/player/jump{num}.png')
+            frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
+            self.add_surface(f'jump{num}', frame)
+
+        for num in range(1, 7):
+            frame = pygame.image.load(f'img/player/stunned{num}.png')
+            frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
+            self.add_surface(f'stunned{num}', frame)
+
+        # hazards
+        for hazard_name in hazard.Hazard.hazards_names:
+            for num in range(1, 5):
+                frame = pygame.image.load(f'img/enemies/{hazard_name}/{hazard_name}{num}.png')
+                self.add_surface(f'{hazard_name}{num}',frame)
+
+    def add_surface(self, name, surface):
+        self.__surfaces[name] = surface
+
+    def get_surface(self, name):
+        return self.__surfaces[name]
+
+    def del_surface(self, name):
+        self.__surfaces.pop(name)
+
     def set_initial_hazard_value(self):
         # level start from 0 (with no hazards) and runs until 20
-        self.hazard = 1
+        self.hazards = 1
 
     def set_bg_color(self, color):
         self.bg_color = color
@@ -52,7 +99,7 @@ class Game:
             self.sprite_group[GROUP_BCKGRND].add(the_line)
 
     def create_lives(self):
-        life_frame = self.surfaces["life"]
+        life_frame = self.get_surface("life")
         for num in range(self.lives):
             life = pygame.sprite.Sprite()
             life.rect = pygame.rect.Rect(((L_SCREEN_EDGE + (num * 8)) * SCALE_FACTOR_X, 176 * SCALE_FACTOR_Y),
@@ -144,10 +191,6 @@ class PlayingState(GameState):
         super().__init__()
 
     def enter(self, game):
-        life_frame = pygame.image.load(f'img/life.png')
-        life_frame = pygame.transform.scale(life_frame, SCALED_LIFE_SIZE)
-        game.surfaces["life"] = life_frame
-
         # create player
         p = player.Player()
 
@@ -165,10 +208,10 @@ class PlayingState(GameState):
         gap.spawn_gap(o2x(128), line1_y, -SCALED_GAP_SPEED, game.sprite_group[GROUP_BCKGRND])
 
         # spawns hazards
-        if game.hazard > 0:
-            for i in range(game.hazard):
+        if game.hazards > 0:
+            for i in range(game.hazards):
                 if len(game.hazard_list) < MAX_HAZARDS:
-                    hazard.spawn_hazard(game.sprite_group[GROUP_HAZARDS])
+                    hazard.Hazard.spawn_hazard(game.sprite_group[GROUP_HAZARDS])
 
         # create lives
         game.create_lives()
@@ -218,7 +261,7 @@ class LevelUpState(GameState):
         self.clock = None
         self.start_time = 0
         self.current_time = 0
-        self.next_hazard = Game.instance().hazard + 1
+        self.next_hazard = Game.instance().hazards + 1
 
         self.level_title = [
             ['Jumping Jack is quick and bold', 'With skill his story will unfold'],
@@ -269,7 +312,7 @@ class LevelUpState(GameState):
         if (self.current_time - self.start_time > time_to_go) and not self.rhyme_end:
             self.start_time = self.current_time
 
-            self.rhyme = self.level_title[game.hazard]
+            self.rhyme = self.level_title[game.hazards]
             rhyme_item = self.rhyme[self.rhyme_part_idx]
             self.rhyme_idx[self.rhyme_part_idx] += 1
             if self.rhyme_idx[self.rhyme_part_idx] >= len(rhyme_item):
@@ -288,7 +331,7 @@ class LevelUpState(GameState):
             pygame.gfxdraw.box(game.screen, (b2x(2), b2y(8), b2x(28), b2y(3)), COLOR_BRIGHT_WHITE)
             txt = f'NEXT LEVEL - {self.next_hazard:>2}  HAZARDS'
             x = len(txt)
-            if game.hazard == 0:
+            if game.hazards == 0:
                 x -= 1
             font_surface = game.font.render(txt[:x], False, COLOR_BASIC_BLUE)
             game.screen.blit(font_surface, (b2x(4), b2y(9)))
@@ -303,10 +346,10 @@ class LevelUpState(GameState):
             game.screen.blit(font_surface, (b2x(0), b2y(18)))
 
         if self.rhyme_end and (self.current_time - self.start_time > 2000):
-            if game.hazard >= 20:
+            if game.hazards >= 20:
                 game.change_state(MenuState())
             else:
-                game.hazard += 1
+                game.hazards += 1
                 game.change_state(PlayingState())
             return
 
@@ -349,7 +392,7 @@ class MenuState(GameState):
         font_surface = game.font.render(txt, False, COLOR_BASIC_BLACK)
         game.screen.blit(font_surface, (b2x(7), b2y(9)))
 
-        txt = f'WITH  {game.hazard:>2}  HAZARDS'
+        txt = f'WITH  {game.hazards:>2}  HAZARDS'
         font_surface = game.font.render(txt, False, COLOR_BASIC_BLACK)
         game.screen.blit(font_surface, (b2x(8), b2y(11)))
 

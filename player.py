@@ -18,28 +18,19 @@ class Player(game_objects.ZSprite):
 
         # hidle animation
         hidle_anim = game_objects.Animation2D(True)
-        pausa1 = pygame.image.load('img/player/idle1.png')
-        pausa2 = pygame.image.load('img/player/idle2.png')
-        pausa3 = pygame.image.load('img/player/idle3.png')
-        pausa1 = pygame.transform.scale(pausa1, SCALED_PLAYER_SIZE)
-        pausa2 = pygame.transform.scale(pausa2, SCALED_PLAYER_SIZE)
-        pausa3 = pygame.transform.scale(pausa3, SCALED_PLAYER_SIZE)
         hidle_anim.loop = True
         hidle_anim.speed = 1
-        hidle_anim.add_frame(game_objects.AnimFrame2D(pausa1, 0.75))
-        hidle_anim.add_frame(game_objects.AnimFrame2D(pausa2, 0.75))
-        hidle_anim.add_frame(game_objects.AnimFrame2D(pausa1, 0.75))
-        hidle_anim.add_frame(game_objects.AnimFrame2D(pausa3, 0.75))
+        hidle_anim.add_frame(game_objects.AnimFrame2D(game.Game.instance().get_surface('idle1'), 0.75))
+        hidle_anim.add_frame(game_objects.AnimFrame2D(game.Game.instance().get_surface('idle2'), 0.75))
+        hidle_anim.add_frame(game_objects.AnimFrame2D(game.Game.instance().get_surface('idle1'), 0.75))
+        hidle_anim.add_frame(game_objects.AnimFrame2D(game.Game.instance().get_surface('idle3'), 0.75))
 
         # walk animation
         walk_anim_right = game_objects.Animation2D(True)
         walk_anim_left = game_objects.Animation2D(True)
         for num in range(1, 5):
-            frame = pygame.image.load(f'img/player/walk{num}.png')
-            frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
-            walk_anim_right.add_frame(game_objects.AnimFrame2D(frame, 0.05))
-            frame = pygame.transform.flip(frame, True, False)
-            walk_anim_left.add_frame(game_objects.AnimFrame2D(frame, 0.05))
+            walk_anim_right.add_frame(game_objects.AnimFrame2D(game.Game.instance().get_surface(f'walk_right{num}'), 0.05))
+            walk_anim_left.add_frame(game_objects.AnimFrame2D(game.Game.instance().get_surface(f'walk_left{num}'), 0.05))
         walk_anim_right.loop = True
         walk_anim_right.speed = 1
         walk_anim_left.loop = True
@@ -48,22 +39,19 @@ class Player(game_objects.ZSprite):
         # jump animation
         jump_anim = game_objects.Animation2D(True)
         for num in range(1, 4):
-            frame = pygame.image.load(f'img/player/jump{num}.png')
-            frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
+            frame = game.Game.instance().get_surface(f'jump{num}')
             jump_anim.add_frame(game_objects.AnimFrame2D(frame, 0.05))
 
         # electrified animation
         electrified_anim = game_objects.Animation2D(True)
         for num in range(1, 3):
-            frame = pygame.image.load(f'img/player/stunned{num}.png')
-            frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
+            frame = game.Game.instance().get_surface(f'stunned{num}')
             electrified_anim.add_frame(game_objects.AnimFrame2D(frame, 0.50))
 
         # stunned animation
         stunned_anim = game_objects.Animation2D(True)
         for num in range(3, 7):
-            frame = pygame.image.load(f'img/player/stunned{num}.png')
-            frame = pygame.transform.scale(frame, SCALED_PLAYER_SIZE)
+            frame = game.Game.instance().get_surface(f'stunned{num}')
             stunned_anim.add_frame(game_objects.AnimFrame2D(frame, 0.05))
             stunned_anim.loop = True
 
