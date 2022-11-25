@@ -5,6 +5,7 @@ import hazard
 import hole
 import player
 import line
+import color_flash
 from globals import *
 
 
@@ -27,11 +28,17 @@ class Game:
 
         self.lives = LIVES
         self.score = 0
-        self.hazard = 10  # level start from 0 (with no hazards) and runs until 20
+        self.highscore = 0
+        self.hazard = 0
+        self.set_initial_hazard_value()
 
         self.font = pygame.font.Font('fonts/zxspectr.ttf', int(8 * SCALE_FACTOR_X))
         self.state = None
         self.new_state = None
+
+    def set_initial_hazard_value(self):
+        # level start from 0 (with no hazards) and runs until 20
+        self.hazard = 20
 
     def set_bg_color(self, color):
         self.bg_color = color
@@ -171,7 +178,8 @@ class PlayingState(GameState):
 
     def update(self, game):
         # draw score
-        font_surface = game.font.render(f"SC{Game.instance().score:05d}", False, SCORE_COLOR)
+        font_surface = game.font.render(f"HI{Game.instance().highscore:05d} SC{Game.instance().score:05d}",
+                                        False, SCORE_COLOR)
         w = font_surface.get_width()
         game.screen.blit(font_surface, (SCALED_R_SCREEN_EDGE - w, 176 * SCALE_FACTOR_Y))
 
@@ -198,6 +206,7 @@ class PlayingState(GameState):
         game.line_list.clear()
         game.hole_list.clear()
         game.life_list.clear()
+        game.hazard_list.clear()
 
 
 # ===================================================================================================
@@ -209,6 +218,8 @@ class LevelUpState(GameState):
         self.clock = None
         self.start_time = 0
         self.current_time = 0
+        self.next_hazard = Game.instance().hazard + 1
+
         self.level_title = [
             ['Jumping Jack is quick and bold', 'With skill his story will unfold'],
             ['THE BALLAD OF JUMPING JACK', 'A daring explorer named Jack...'],
@@ -237,18 +248,28 @@ class LevelUpState(GameState):
         self.rhyme_part_idx = 0
         self.rhyme_idx = [0, 0]
         self.rhyme_end = False
+        self.fast_text = False
+
+    def handle_input(self, game):
+        key = pygame.key.get_pressed()
+        if key[pygame.K_RETURN]:
+            self.fast_text = True
 
     def enter(self, game):
         self.clock = pygame.time.Clock()
-        game.hazard += 1
         game.set_bg_color(COLOR_BASIC_YELLOW)
 
     def update(self, game):
         self.current_time += self.clock.tick()
-        if (self.current_time - self.start_time > 125) and not self.rhyme_end:
+
+        time_to_go = 125
+        if self.fast_text:
+            time_to_go = 30
+
+        if (self.current_time - self.start_time > time_to_go) and not self.rhyme_end:
             self.start_time = self.current_time
 
-            self.rhyme = self.level_title[game.hazard - 1]
+            self.rhyme = self.level_title[game.hazard]
             rhyme_item = self.rhyme[self.rhyme_part_idx]
             self.rhyme_idx[self.rhyme_part_idx] += 1
             if self.rhyme_idx[self.rhyme_part_idx] >= len(rhyme_item):
@@ -259,17 +280,18 @@ class LevelUpState(GameState):
 
         # original size of ZX Spectrum screen: (256, 192)
         # 8x8 blocks: (32, 24)
-        pygame.gfxdraw.box(game.screen, (b2x(9), b2y(2), b2x(16), b2y(3)), COLOR_BASIC_GREEN)
+        pygame.gfxdraw.box(game.screen, (b2x(8), b2y(2), b2x(16), b2y(3)), COLOR_BASIC_GREEN)
         font_surface = game.font.render(f'JUMPING JACK', False, COLOR_BASIC_BLACK)
-        game.screen.blit(font_surface, (b2x(11), b2y(3)))
+        game.screen.blit(font_surface, (b2x(10), b2y(3)))
 
-        pygame.gfxdraw.box(game.screen, (b2x(2), b2y(8), b2x(28), b2y(3)), COLOR_BRIGHT_WHITE)
-        txt = f'NEXT LEVEL - {game.hazard:>2}  HAZARDS'
-        x = len(txt)
-        if game.hazard == 1:
-            x -= 1
-        font_surface = game.font.render(txt[:x], False, COLOR_BASIC_BLUE)
-        game.screen.blit(font_surface, (b2x(4), b2y(9)))
+        if self.next_hazard <= 20:
+            pygame.gfxdraw.box(game.screen, (b2x(2), b2y(8), b2x(28), b2y(3)), COLOR_BRIGHT_WHITE)
+            txt = f'NEXT LEVEL - {self.next_hazard:>2}  HAZARDS'
+            x = len(txt)
+            if game.hazard == 0:
+                x -= 1
+            font_surface = game.font.render(txt[:x], False, COLOR_BASIC_BLUE)
+            game.screen.blit(font_surface, (b2x(4), b2y(9)))
 
         txt = self.rhyme[0][:self.rhyme_idx[0]]
         font_surface = game.font.render(f'{txt}', False, COLOR_BASIC_BLUE)
@@ -281,7 +303,11 @@ class LevelUpState(GameState):
             game.screen.blit(font_surface, (b2x(0), b2y(18)))
 
         if self.rhyme_end and (self.current_time - self.start_time > 2000):
-            game.change_state(PlayingState())
+            if game.hazard >= 20:
+                game.change_state(MenuState())
+            else:
+                game.hazard += 1
+                game.change_state(PlayingState())
             return
 
     def exit(self, game):
@@ -291,14 +317,23 @@ class LevelUpState(GameState):
 class MenuState(GameState):
     def __init__(self):
         super().__init__()
+        self.new_high = False
+        self.new_high_colours = [COLOR_BRIGHT_WHITE, COLOR_BRIGHT_MAGENTA]
+        self.color_flash = None
 
     def enter(self, game):
         game.set_bg_color(COLOR_BASIC_YELLOW)
+        if game.score > game.highscore:
+            game.highscore = game.score
+            self.new_high = True
+            self.color_flash = color_flash.ColorFlash(self.new_high_colours, 1000, 5, 1000)
+            self.color_flash.start()
 
     def handle_input(self, game):
         key = pygame.key.get_pressed()
 
         if key[pygame.K_RETURN]:
+            game.set_initial_hazard_value()
             game.change_state(PlayingState())
 
     def update(self, game):
@@ -318,9 +353,21 @@ class MenuState(GameState):
         font_surface = game.font.render(txt, False, COLOR_BASIC_BLACK)
         game.screen.blit(font_surface, (b2x(8), b2y(11)))
 
-        txt = 'Press ENTER to replay'
-        font_surface = game.font.render(txt, False, COLOR_BASIC_BLUE)
+        if self.new_high:
+            self.color_flash.update()
+            box_color = self.color_flash.get_current_color() if self.color_flash.is_enabled() else COLOR_BRIGHT_MAGENTA
+            txt_color = COLOR_BRIGHT_WHITE if box_color == COLOR_BRIGHT_MAGENTA else COLOR_BRIGHT_MAGENTA
+
+            pygame.gfxdraw.box(game.screen, (b2x(10), b2y(15), b2x(12), b2y(3)), box_color)
+            font_surface = game.font.render('NEW HIGH', False, txt_color)
+            game.screen.blit(font_surface, (b2x(12), b2y(16)))
+
+        font_surface = game.font.render('Press ENTER to replay', False, COLOR_BASIC_BLUE)
         game.screen.blit(font_surface, (b2x(5), b2y(21)))
+
+    def exit(self, game):
+        self.new_high = False
+        self.color_flash = None
 
 
 # ===================================================================================================

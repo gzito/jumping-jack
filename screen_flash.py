@@ -38,8 +38,8 @@ class ScreenFlash:
                     self.stop()
 
     def stop(self):
-        game.Game.instance().set_bg_color(self.colors[0])
         self.__is_enabled = False
+        game.Game.instance().set_bg_color(self.colors[0])
 
     def is_enabled(self):
         return self.__is_enabled
