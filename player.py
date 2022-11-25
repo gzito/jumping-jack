@@ -137,6 +137,7 @@ class HidleState(PlayerState):
 
     def enter(self, player):
         player.set_animation(player.animations["hidle"])
+        game.Game.instance().get_sfx("stand").play(-1)
 
     def handle_input(self, player):
         key = pygame.key.get_pressed()
@@ -156,10 +157,16 @@ class HidleState(PlayerState):
             if player.has_gap_down():
                 player.change_state(FallingState())
 
+    def exit(self, player):
+        game.Game.instance().get_sfx("stand").stop()
+
 
 class WalkingState(PlayerState):
     def __init__(self):
         super().__init__()
+
+    def enter(self, player):
+        game.Game.instance().get_sfx("run").play(-1)
 
     def handle_input(self, player):
         key = pygame.key.get_pressed()
@@ -188,6 +195,9 @@ class WalkingState(PlayerState):
             if player.has_gap_down():
                 player.change_state(FallingState())
 
+    def exit(self, player):
+        game.Game.instance().get_sfx("run").stop()
+
 
 class JumpingState(PlayerState):
     def __init__(self):
@@ -198,14 +208,17 @@ class JumpingState(PlayerState):
         player.set_animation(player.animations["jump"])
         player.next_jump_y = player.y - 24 * SCALE_FACTOR_Y
         self.has_gap_up = player.has_gap_up()
+        game.Game.instance().get_sfx("jump").play()
 
     def update(self, player, dt):
         player.move(0, -1.5 * SCALE_FACTOR_Y)
 
         if self.has_gap_up or CHEAT_JUMP_IMMUNITY:
             if player.line_idx == 0 and player.y <= game.Game.instance().line_list[0].rect.y:
-                game.Game.instance().level_up()
-                pygame.time.delay(1000)
+                game.Game.instance().change_state(game.LevelUpState())
+                game.Game.instance().get_sfx("jump").stop()
+                game.Game.instance().get_sfx('win').play()
+                pygame.time.delay(2000)
                 return
 
             if player.y <= player.next_jump_y:
@@ -221,6 +234,9 @@ class JumpingState(PlayerState):
                 player.y = game.Game.instance().line_list[player.line_idx].rect.y
                 player.change_state(ElectricfiedState())
 
+    def exit(self, player):
+        game.Game.instance().get_sfx("jump").stop()
+
 
 class FallingState(PlayerState):
     def __init__(self):
@@ -228,6 +244,7 @@ class FallingState(PlayerState):
 
     def enter(self, player):
         player.next_fallen_y = player.y + 24 * SCALE_FACTOR_Y
+        game.Game.instance().get_sfx("fall").play()
 
     def update(self, player, dt):
         player.move(0, 5)
@@ -237,6 +254,9 @@ class FallingState(PlayerState):
             player.line_idx += 1
             player.change_state(StunnedState())
 
+    def exit(self, player):
+        game.Game.instance().get_sfx("fall").stop()
+
 
 class HazardHitState(PlayerState):
     def __init__(self):
@@ -245,14 +265,16 @@ class HazardHitState(PlayerState):
 
     def enter(self, player):
         self.flash.start()
-
-    def exit(self, player):
-        self.flash.stop()
+        game.Game.instance().get_sfx("kill").play()
 
     def update(self, player, dt):
         self.flash.update()
         if not self.flash.is_enabled():
             player.change_state(StunnedState())
+
+    def exit(self, player):
+        self.flash.stop()
+        game.Game.instance().get_sfx("kill").stop()
 
 
 class ElectricfiedState(PlayerState):
@@ -280,11 +302,18 @@ class StunnedState(PlayerState):
 
     def enter(self, player):
         player.set_animation(player.animations["stunned"])
+        game.Game.instance().get_sfx('longstun').play()
 
     def exit(self, player):
         if not CHEAT_INFINITE_LIVES:
             if player.line_idx == 7:
                 game.Game().instance().decrement_lives()
+                if game.Game.instance().lives < 1:
+                    game.Game.instance().get_sfx('longstun').stop()
+                    game.Game.instance().get_sfx('lose').play()
+                    pygame.time.delay(2000)
+                    game.Game.instance().change_state(game.MenuState())
+        game.Game.instance().get_sfx('longstun').stop()
 
     def update(self, player, dt):
         if player.has_gap_down():

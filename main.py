@@ -16,12 +16,17 @@ DISPLAY_MODE_FLAGS = pygame.DOUBLEBUF
 random.seed()
 pygame.init()
 pygame.font.init()
+pygame.mixer.init()
+
 screen = pygame.display.set_mode(RESOLUTION, DISPLAY_MODE_FLAGS, vsync=1)
 pygame.display.set_caption('Jumping Jack')
 
+# load asset
 game.Game.instance().load_resources()
+# run the game
 game.Game.instance().run()
 
 game.Game.destroy()
+pygame.mixer.quit()
 pygame.font.quit()
 pygame.quit()

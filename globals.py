@@ -93,7 +93,7 @@ GROUP_HUD = "hud"
 GROUP_HAZARDS = "hazards"
 GROUP_PLAYER = "player"
 
-# cheats :)
+# cheats ;)
 CHEAT_HAZARD_IMMUNITY = False
 CHEAT_JUMP_IMMUNITY = False
 CHEAT_FALL_IMMUNITY = False

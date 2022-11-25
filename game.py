@@ -17,6 +17,7 @@ class Game:
         self.bg_color = BACKGROUND_COLOR
         self.clock = pygame.time.Clock()
         self.__surfaces = {}
+        self.__sfx = {}
         self.screen = pygame.display.get_surface()
 
         self.line_list = []
@@ -36,6 +37,10 @@ class Game:
 
         self.state = None
         self.new_state = None
+
+    def set_initial_hazard_value(self):
+        # level start from 0 (with no hazards) and runs until 20
+        self.hazards = 1
 
     def load_resources(self):
         self.font = pygame.font.Font('fonts/zxspectr.ttf', int(8 * SCALE_FACTOR_X))
@@ -72,7 +77,17 @@ class Game:
         for hazard_name in hazard.Hazard.hazards_names:
             for num in range(1, 5):
                 frame = pygame.image.load(f'img/enemies/{hazard_name}/{hazard_name}{num}.png')
-                self.add_surface(f'{hazard_name}{num}',frame)
+                self.add_surface(f'{hazard_name}{num}', frame)
+
+        # sfx
+        self.add_sfx('stand', pygame.mixer.Sound('sfx/Stand.wav'))
+        self.add_sfx('run', pygame.mixer.Sound('sfx/Run.wav'))
+        self.add_sfx('jump', pygame.mixer.Sound('sfx/Jump.wav'))
+        self.add_sfx('kill', pygame.mixer.Sound('sfx/Kill.wav'))
+        self.add_sfx('fall', pygame.mixer.Sound('sfx/Fall.wav'))
+        self.add_sfx('lose', pygame.mixer.Sound('sfx/Lose.wav'))
+        self.add_sfx('win', pygame.mixer.Sound('sfx/Win.wav'))
+        self.add_sfx('longstun', pygame.mixer.Sound('sfx/LongStun.wav'))
 
     def add_surface(self, name, surface):
         self.__surfaces[name] = surface
@@ -83,9 +98,14 @@ class Game:
     def del_surface(self, name):
         self.__surfaces.pop(name)
 
-    def set_initial_hazard_value(self):
-        # level start from 0 (with no hazards) and runs until 20
-        self.hazards = 1
+    def add_sfx(self, name, sfx):
+        self.__sfx[name] = sfx
+
+    def get_sfx(self, name):
+        return self.__sfx[name]
+
+    def del_sfx(self, name):
+        self.__sfx.pop(name)
 
     def set_bg_color(self, color):
         self.bg_color = color
@@ -113,9 +133,6 @@ class Game:
         last_live = self.life_list[-1]
         del self.life_list[-1]
         self.sprite_group[GROUP_HUD].remove(last_live)
-
-    def level_up(self):
-        self.change_state(LevelUpState())
 
     def update(self):
         if self.new_state is not None:
