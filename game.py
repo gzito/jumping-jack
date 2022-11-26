@@ -68,7 +68,7 @@ class Game:
 
     def set_initial_hazard_value(self):
         # level start from 0 (with no hazards) and runs until 20
-        self.hazards = 10
+        self.hazards = 0
 
     def border_draw_enable(self, enabled):
         self.__is_border_draw_enabled = enabled
