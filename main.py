@@ -37,7 +37,7 @@ pygame.init()
 pygame.font.init()
 pygame.mixer.init()
 
-screen = pygame.display.set_mode(RESOLUTION, DISPLAY_MODE_FLAGS, vsync=1)
+screen = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT), DISPLAY_MODE_FLAGS, vsync=1)
 pygame.display.set_caption('Jumping Jack')
 
 # load asset

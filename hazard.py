@@ -62,16 +62,16 @@ class Hazard(game_objects.ZSprite):
 
     def update(self, *args, **kwargs):
         self.move(self.speed)
-        if self.x > SCALED_R_SCREEN_EDGE or self.x <= -SCALED_GAP_WIDTH + SCALED_L_SCREEN_EDGE:
+        if self.x > SCALED_RIGHT_BORDER_X or self.x <= SCALED_SCREEN_OFFSET_X - SCALED_GAP_WIDTH:
             self.wrap()
         super().update(*args, **kwargs)
 
     def wrap(self):
-        if self.x <= -SCALED_L_SCREEN_EDGE:
-            self.x = SCALED_R_SCREEN_EDGE
-            self.y = self.y - SCALED_LINES_DISTANCE
-            if self.y < -(16 * SCALE_FACTOR_Y):
-                self.y = game.Game.instance().line_list[7].rect.y - (16 * SCALE_FACTOR_Y)
+        if self.x <= SCALED_SCREEN_OFFSET_X:
+            self.x = SCALED_RIGHT_BORDER_X
+            self.y = self.y - SCALED_FLOOR_DISTANCE
+            if self.y < zxy2y(-ZX_HAZARD_HEIGHT):
+                self.y = game.Game.instance().floor_list[7].rect.y - SCALED_HAZARD_HEIGHT
 
     # spawn a random hazard at random x coordinate
     @staticmethod
@@ -81,8 +81,8 @@ class Hazard(game_objects.ZSprite):
         hazard = Hazard(Hazard.hazards_names[r], len(game.Game.instance().hazard_list))
 
         while True:
-            x = random.randint(SCALED_L_SCREEN_EDGE, SCALED_R_SCREEN_EDGE)
-            y = game.Game.instance().line_list[random.randint(1, 6)].rect.y - (16 * SCALE_FACTOR_Y)
+            x = random.randint(int(SCALED_SCREEN_OFFSET_X), int(SCALED_RIGHT_BORDER_X))
+            y = game.Game.instance().floor_list[random.randint(1, 6)].rect.y - SCALED_HAZARD_HEIGHT
             hazard.set_position(x, y)
             if pygame.sprite.spritecollideany(hazard, game.Game.instance().sprite_group[GROUP_HAZARDS]) is None and \
                     pygame.sprite.spritecollideany(hazard, game.Game.instance().sprite_group[GROUP_PLAYER]) is None:

@@ -37,8 +37,8 @@ class Player(game_objects.ZSprite):
         self.new_state = None
         self.next_jump_y = 0
         self.next_fallen_y = 0
-        # idx of line just above head
-        self.line_idx = 7
+        # idx of floor just above head
+        self.floor_idx = 7
 
         # hidle animation
         hidle_anim = game_objects.Animation2D(True)
@@ -100,9 +100,6 @@ class Player(game_objects.ZSprite):
         if self.new_state is not None:
             self.state.exit(self)
 
-        # print(f'{self.x},{self.y}')
-        # print(f'self.line_idx: {self.line_idx}')
-
     # move the sprite of the given offset
     def move(self, dx=0.0, dy=0.0):
         super().move(dx, dy)
@@ -128,9 +125,8 @@ class Player(game_objects.ZSprite):
 
     def has_gap_down(self):
         for the_gap in game.Game.instance().gap_list:
-            rect = the_gap.rect
-            if abs(self.rect.bottom - rect.y) <= 1:
-                if self.rect.x > rect.x and self.rect.right < rect.right:
+            if abs(self.rect.bottom - the_gap.rect.y) <= SCALED_FLOOR_THICKNESS:
+                if self.rect.x > the_gap.rect.x and self.rect.right < the_gap.rect.right:
                     return True
         return False
 
@@ -196,12 +192,12 @@ class WalkingState(PlayerState):
         key = pygame.key.get_pressed()
         if key[pygame.K_LEFT]:
             player.move(-SCALED_PLAYER_SPEED, 0)
-            if player.get_x() < SCALED_L_SCREEN_EDGE:
-                player.set_x(SCALED_R_SCREEN_EDGE - SCALED_PLAYER_WIDTH)
+            if player.get_x() < SCALED_SCREEN_OFFSET_X:
+                player.set_x(SCALED_RIGHT_BORDER_X - SCALED_PLAYER_WIDTH)
         elif key[pygame.K_RIGHT]:
             player.move(SCALED_PLAYER_SPEED, 0)
-            if player.get_x() > SCALED_R_SCREEN_EDGE - SCALED_PLAYER_WIDTH:
-                player.set_x(SCALED_L_SCREEN_EDGE)
+            if player.get_x() > SCALED_RIGHT_BORDER_X - SCALED_PLAYER_WIDTH:
+                player.set_x(SCALED_SCREEN_OFFSET_X)
         else:
             player.change_state(HidleState())
 
@@ -230,7 +226,7 @@ class JumpingState(PlayerState):
 
     def enter(self, player):
         player.set_animation(player.animations["jump"])
-        player.next_jump_y = player.y - 24 * SCALE_FACTOR_Y
+        player.next_jump_y = game.Game.instance().floor_list[player.floor_idx].rect.y - SCALED_PLAYER_HEIGHT
         self.has_gap_up = player.has_gap_up()
         game.Game.instance().get_sfx("jump").play()
 
@@ -238,7 +234,7 @@ class JumpingState(PlayerState):
         player.move(0, -1.5 * SCALE_FACTOR_Y)
 
         if self.has_gap_up or CHEAT_JUMP_IMMUNITY:
-            if player.line_idx == 0 and player.y <= game.Game.instance().line_list[0].rect.y:
+            if player.floor_idx == 0 and player.y <= game.Game.instance().floor_list[0].rect.y:
                 game.Game.instance().change_state(game.LevelUpState())
                 game.Game.instance().get_sfx("jump").stop()
                 game.Game.instance().get_sfx('win').play()
@@ -247,15 +243,15 @@ class JumpingState(PlayerState):
 
             if player.y <= player.next_jump_y:
                 player.y = player.next_jump_y
-                player.next_jump_y = player.y - 25 * SCALE_FACTOR_Y
-                player.line_idx = player.line_idx - 1
+                player.floor_idx = player.floor_idx - 1
+                player.next_jump_y = game.Game.instance().floor_list[player.floor_idx].rect.y - SCALED_PLAYER_HEIGHT
                 grp = game.Game.instance().sprite_group[GROUP_BCKGRND]
                 gap.spawn_random_gap(grp)
                 game.Game.instance().score = game.Game.instance().score + 5
                 player.change_state(HidleState())
         else:
-            if player.y <= game.Game.instance().line_list[player.line_idx].rect.y:
-                player.y = game.Game.instance().line_list[player.line_idx].rect.y
+            if player.y <= game.Game.instance().floor_list[player.floor_idx].rect.y:
+                player.y = game.Game.instance().floor_list[player.floor_idx].rect.y
                 player.change_state(ElectricfiedState())
 
     def exit(self, player):
@@ -267,15 +263,15 @@ class FallingState(PlayerState):
         super().__init__()
 
     def enter(self, player):
-        player.next_fallen_y = player.y + 24 * SCALE_FACTOR_Y
+        player.next_fallen_y = player.y + SCALED_FLOOR_DISTANCE
         game.Game.instance().get_sfx("fall").play()
 
     def update(self, player, dt):
         player.move(0, 5)
         if player.y >= player.next_fallen_y:
             player.y = player.next_fallen_y
-            player.next_fallen_y = player.y + 24 * SCALE_FACTOR_Y
-            player.line_idx += 1
+            player.next_fallen_y = player.y + SCALED_FLOOR_DISTANCE
+            player.floor_idx += 1
             player.change_state(StunnedState())
 
     def exit(self, player):
@@ -330,7 +326,7 @@ class StunnedState(PlayerState):
 
     def exit(self, player):
         if not CHEAT_INFINITE_LIVES:
-            if player.line_idx == 7:
+            if player.floor_idx == 7:
                 game.Game().instance().decrement_lives()
                 if game.Game.instance().lives < 1:
                     game.Game.instance().get_sfx('longstun').stop()

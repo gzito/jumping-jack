@@ -26,12 +26,12 @@ import pygame
 from globals import *
 
 
-class Line(pygame.sprite.Sprite):
+class Floor(pygame.sprite.Sprite):
     def __init__(self, i):
         super().__init__()
-        x = SCALED_L_SCREEN_EDGE
-        y = i * SCALED_LINES_DISTANCE
-        # print(f'line {i}: {i * SCALED_LINES_DISTANCE}')
-        self.image = pygame.Surface((SCALED_LINE_WIDTH, SCALED_LINE_THICKNESS))
-        self.image.fill(LINE_COLOR)
-        self.rect = pygame.Rect(x, y, SCALED_LINE_WIDTH, SCALED_LINE_THICKNESS)
+        x = SCALED_SCREEN_OFFSET_X
+        y = SCALED_SCREEN_OFFSET_Y + (i * SCALED_FLOOR_DISTANCE)
+        # print(f'floor {i}: {i * SCALED_FLOOR_DISTANCE}')
+        self.image = pygame.Surface((SCALED_FLOOR_WIDTH, SCALED_FLOOR_THICKNESS))
+        self.image.fill(FLOOR_COLOR)
+        self.rect = pygame.Rect(x, y, SCALED_FLOOR_WIDTH, SCALED_FLOOR_THICKNESS)

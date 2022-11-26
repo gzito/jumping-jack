@@ -28,7 +28,7 @@ import pygame.gfxdraw
 import hazard
 import gap
 import player
-import line
+import floor
 import color_flash
 from globals import *
 
@@ -38,13 +38,14 @@ class Game:
     instance_ = None
 
     def __init__(self):
-        self.bg_color = BACKGROUND_COLOR
+        self.__bg_color = BACKGROUND_COLOR
+        self.__border_color = BACKGROUND_COLOR
         self.clock = pygame.time.Clock()
         self.__surfaces = {}
         self.__sfx = {}
         self.screen = pygame.display.get_surface()
 
-        self.line_list = []
+        self.floor_list = []
         self.gap_list = []
         self.life_list = []
         self.hazard_list = []
@@ -132,22 +133,27 @@ class Game:
         self.__sfx.pop(name)
 
     def set_bg_color(self, color):
-        self.bg_color = color
+        self.__bg_color = color
         for the_gap in self.instance().gap_list:
             the_gap.switch_surface(color)
 
+    def set_border_color(self, color):
+        self.__border_color = color
+
     def create_floors(self):
         for i in range(8):
-            the_line = line.Line(i)
-            self.line_list.append(the_line)
-            self.sprite_group[GROUP_BCKGRND].add(the_line)
+            the_floor = floor.Floor(i)
+            self.floor_list.append(the_floor)
+            self.sprite_group[GROUP_BCKGRND].add(the_floor)
 
     def create_lives(self):
         life_frame = self.get_surface("life")
         for num in range(self.lives):
             life = pygame.sprite.Sprite()
-            life.rect = pygame.rect.Rect(((L_SCREEN_EDGE + (num * 8)) * SCALE_FACTOR_X, 176 * SCALE_FACTOR_Y),
-                                         (life_frame.get_width(), life_frame.get_height()))
+            life.rect = pygame.rect.Rect(zxx2x(num * ZX_LIFE_WIDTH),
+                                         zxy2y(ZX_SCREEN_HEIGHT - ZX_LIFE_HEIGHT - 8),
+                                         life_frame.get_width(),
+                                         life_frame.get_height())
             life.image = life_frame
             self.life_list.append(life)
             self.sprite_group[GROUP_HUD].add(life)
@@ -157,6 +163,30 @@ class Game:
         last_live = self.life_list[-1]
         del self.life_list[-1]
         self.sprite_group[GROUP_HUD].remove(last_live)
+
+    def draw_background(self):
+        self.screen.fill(Game.instance().__bg_color,
+                         (SCALED_SCREEN_OFFSET_X, SCALED_SCREEN_OFFSET_Y,
+                          zxw2w(ZX_SCREEN_WIDTH), zxh2h(ZX_SCREEN_HEIGHT)))
+
+    def draw_borders(self):
+        # top
+        pygame.gfxdraw.box(self.screen,
+                           (0, 0, DISPLAY_WIDTH, ZX_TOP_BORDER_HEIGHT * SCALE_FACTOR_Y),
+                           self.__border_color)
+        # bottom
+        pygame.gfxdraw.box(self.screen,
+                           (0, SCALED_BOTTOM_BORDER_Y, DISPLAY_WIDTH, ZX_BOTTOM_BORDER_HEIGHT * SCALE_FACTOR_Y),
+                           self.__border_color)
+        # left
+        pygame.gfxdraw.box(self.screen,
+                           (0, SCALED_SCREEN_OFFSET_Y, zxw2w(ZX_LEFT_BORDER_WIDTH), zxh2h(ZX_SCREEN_HEIGHT)),
+                           self.__border_color)
+        # right
+        pygame.gfxdraw.box(self.screen,
+                           (SCALED_RIGHT_BORDER_X, SCALED_SCREEN_OFFSET_Y, zxw2w(ZX_RIGHT_BORDER_WIDTH),
+                            zxh2h(ZX_SCREEN_HEIGHT)),
+                           self.__border_color)
 
     def update(self):
         if self.new_state is not None:
@@ -189,9 +219,11 @@ class Game:
             self.clock.tick(FPS)
 
             # draw background
-            self.screen.fill(Game.instance().bg_color)
+            self.draw_background()
 
             self.update()
+
+            self.draw_borders()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT or (event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE):
@@ -232,21 +264,22 @@ class PlayingState(GameState):
         super().__init__()
 
     def enter(self, game):
-        # create player
+        # create jack
         p = player.Player()
 
-        # starting position
-        p.set_position((ORIGINAL_RESOLUTION[0] - ORIGINAL_PLAYER_SIZE[0]) / 2 * SCALE_FACTOR_X,
-                       176 * SCALE_FACTOR_Y)
+        # jack starting position
+        p.set_position(zxx2x(ZX_SCREEN_WIDTH / 2) - (SCALED_PLAYER_WIDTH / 2),
+                       zxy2y(ZX_SCREEN_HEIGHT - ZX_PLAYER_HEIGHT))
         game.sprite_group[GROUP_PLAYER].add(p)
 
         # create floors
         game.create_floors()
 
         # spawns 2 gaps
-        line1_y = game.line_list[1].rect.y
-        gap.spawn_gap(o2x(128), line1_y, SCALED_GAP_SPEED, game.sprite_group[GROUP_BCKGRND])
-        gap.spawn_gap(o2x(128), line1_y, -SCALED_GAP_SPEED, game.sprite_group[GROUP_BCKGRND])
+        floor_idx = 1
+        floor_y = game.floor_list[floor_idx].rect.y
+        gap.spawn_gap(zxx2x(128), floor_y, SCALED_GAP_SPEED, floor_idx, game.sprite_group[GROUP_BCKGRND])
+        gap.spawn_gap(zxx2x(128), floor_y, -SCALED_GAP_SPEED, floor_idx, game.sprite_group[GROUP_BCKGRND])
 
         # spawns hazards
         if game.hazards > 0:
@@ -257,26 +290,32 @@ class PlayingState(GameState):
         # create lives
         game.create_lives()
 
-        # set background color
+        # set background and border color
         game.set_bg_color(BACKGROUND_COLOR)
+        game.set_border_color(BACKGROUND_COLOR)
 
     def update(self, game):
-        # draw score
-        font_surface = game.font.render(f"HI{Game.instance().highscore:05d} SC{Game.instance().score:05d}",
-                                        False, SCORE_COLOR)
-        w = font_surface.get_width()
-        game.screen.blit(font_surface, (SCALED_R_SCREEN_EDGE - w, 176 * SCALE_FACTOR_Y))
-
         # update sprites
         dt = game.clock.get_time() / 1000
         game.sprite_group[GROUP_BCKGRND].update(dt)
         game.sprite_group[GROUP_HAZARDS].update(dt)
         game.sprite_group[GROUP_PLAYER].update(dt)
 
-        # draw sprites
+        # draw floors and gaps
         game.sprite_group[GROUP_BCKGRND].draw(game.screen)
+
+        # draw score
+        txt = f"HI{Game.instance().highscore:05d} SC{Game.instance().score:05d}"
+        font_surface = game.font.render(txt, False, SCORE_COLOR)
+        w = font_surface.get_width()
+        h = font_surface.get_height()
+        game.screen.blit(font_surface, (zxx2x(ZX_SCREEN_WIDTH) - w, zxy2y(ZX_SCREEN_HEIGHT - 8) - h))
+
+        # draw lives
         game.sprite_group[GROUP_HUD].draw(game.screen)
+        # draw hazards
         game.sprite_group[GROUP_HAZARDS].draw(game.screen)
+        # draw jack
         game.sprite_group[GROUP_PLAYER].draw(game.screen)
 
         # draw debug rect
@@ -287,7 +326,7 @@ class PlayingState(GameState):
         game.sprite_group[GROUP_HUD].empty()
         game.sprite_group[GROUP_PLAYER].empty()
         game.sprite_group[GROUP_HAZARDS].empty()
-        game.line_list.clear()
+        game.floor_list.clear()
         game.gap_list.clear()
         game.life_list.clear()
         game.hazard_list.clear()
@@ -342,6 +381,7 @@ class LevelUpState(GameState):
     def enter(self, game):
         self.clock = pygame.time.Clock()
         game.set_bg_color(COLOR_BASIC_YELLOW)
+        game.set_border_color(COLOR_BASIC_YELLOW)
 
     def update(self, game):
         self.current_time += self.clock.tick()
@@ -362,29 +402,27 @@ class LevelUpState(GameState):
                 if self.rhyme_part_idx > 1:
                     self.rhyme_end = True
 
-        # original size of ZX Spectrum screen: (256, 192)
-        # 8x8 blocks: (32, 24)
-        pygame.gfxdraw.box(game.screen, (b2x(8), b2y(2), b2x(16), b2y(3)), COLOR_BASIC_GREEN)
+        pygame.gfxdraw.box(game.screen, (zxbx2x(8), zxby2y(2), zxbw2w(16), zxbh2h(3)), COLOR_BASIC_GREEN)
         font_surface = game.font.render(f'JUMPING JACK', False, COLOR_BASIC_BLACK)
-        game.screen.blit(font_surface, (b2x(10), b2y(3)))
+        game.screen.blit(font_surface, (zxbx2x(10), zxby2y(3)))
 
         if self.next_hazard <= 20:
-            pygame.gfxdraw.box(game.screen, (b2x(2), b2y(8), b2x(28), b2y(3)), COLOR_BRIGHT_WHITE)
+            pygame.gfxdraw.box(game.screen, (zxbx2x(2), zxby2y(8), zxbw2w(28), zxbh2h(3)), COLOR_BRIGHT_WHITE)
             txt = f'NEXT LEVEL - {self.next_hazard:>2}  HAZARDS'
             x = len(txt)
             if game.hazards == 0:
                 x -= 1
             font_surface = game.font.render(txt[:x], False, COLOR_BASIC_BLUE)
-            game.screen.blit(font_surface, (b2x(4), b2y(9)))
+            game.screen.blit(font_surface, (zxbx2x(4), zxby2y(9)))
 
         txt = self.rhyme[0][:self.rhyme_idx[0]]
         font_surface = game.font.render(f'{txt}', False, COLOR_BASIC_BLUE)
-        game.screen.blit(font_surface, (b2x(0), b2y(16)))
+        game.screen.blit(font_surface, (zxbx2x(0), zxby2y(16)))
 
         if self.rhyme_idx[1] > 0:
             txt = self.rhyme[1][:self.rhyme_idx[1]]
             font_surface = game.font.render(f'{txt}', False, COLOR_BASIC_BLUE)
-            game.screen.blit(font_surface, (b2x(0), b2y(18)))
+            game.screen.blit(font_surface, (zxbx2x(0), zxby2y(18)))
 
         if self.rhyme_end and (self.current_time - self.start_time > 2000):
             if game.hazards >= 20:
@@ -407,6 +445,8 @@ class MenuState(GameState):
 
     def enter(self, game):
         game.set_bg_color(COLOR_BASIC_YELLOW)
+        game.set_border_color(COLOR_BASIC_YELLOW)
+
         if game.score > game.highscore:
             game.highscore = game.score
             self.new_high = True
@@ -421,33 +461,31 @@ class MenuState(GameState):
             game.change_state(PlayingState())
 
     def update(self, game):
-        # original size of ZX Spectrum screen: (256, 192)
-        # 8x8 blocks: (32, 24)
-        pygame.gfxdraw.box(game.screen, (b2x(8), b2y(2), b2x(16), b2y(3)), COLOR_BASIC_GREEN)
+        pygame.gfxdraw.box(game.screen, (zxbx2x(8), zxby2y(2), zxbw2w(16), zxbh2h(3)), COLOR_BASIC_GREEN)
         font_surface = game.font.render(f'JUMPING JACK', False, COLOR_BASIC_BLACK)
-        game.screen.blit(font_surface, (b2x(10), b2y(3)))
+        game.screen.blit(font_surface, (zxbx2x(10), zxby2y(3)))
 
-        pygame.gfxdraw.box(game.screen, (b2x(5), b2y(8), b2x(22), b2y(5)), COLOR_BASIC_CYAN)
+        pygame.gfxdraw.box(game.screen, (zxbx2x(5), zxby2y(8), zxbw2w(22), zxbh2h(5)), COLOR_BASIC_CYAN)
 
         txt = f'FINAL SCORE  {game.score:05}'
         font_surface = game.font.render(txt, False, COLOR_BASIC_BLACK)
-        game.screen.blit(font_surface, (b2x(7), b2y(9)))
+        game.screen.blit(font_surface, (zxbx2x(7), zxby2y(9)))
 
         txt = f'WITH  {game.hazards:>2}  HAZARDS'
         font_surface = game.font.render(txt, False, COLOR_BASIC_BLACK)
-        game.screen.blit(font_surface, (b2x(8), b2y(11)))
+        game.screen.blit(font_surface, (zxbx2x(8), zxby2y(11)))
 
         if self.new_high:
             self.color_flash.update()
             box_color = self.color_flash.get_current_color() if self.color_flash.is_enabled() else COLOR_BRIGHT_MAGENTA
             txt_color = COLOR_BRIGHT_WHITE if box_color == COLOR_BRIGHT_MAGENTA else COLOR_BRIGHT_MAGENTA
 
-            pygame.gfxdraw.box(game.screen, (b2x(10), b2y(15), b2x(12), b2y(3)), box_color)
+            pygame.gfxdraw.box(game.screen, (zxbx2x(10), zxby2y(15), zxbw2w(12), zxbh2h(3)), box_color)
             font_surface = game.font.render('NEW HIGH', False, txt_color)
-            game.screen.blit(font_surface, (b2x(12), b2y(16)))
+            game.screen.blit(font_surface, (zxbx2x(12), zxby2y(16)))
 
         font_surface = game.font.render('Press ENTER to replay', False, COLOR_BASIC_BLUE)
-        game.screen.blit(font_surface, (b2x(5), b2y(21)))
+        game.screen.blit(font_surface, (zxbx2x(5), zxby2y(21)))
 
     def exit(self, game):
         self.new_high = False
@@ -462,19 +500,33 @@ class LoaderState(GameState):
         super().__init__()
         self.clock = pygame.time.Clock()
         self.elaped_ms = 0
+        self.color_list = [COLOR_BASIC_BLACK,
+                           COLOR_BASIC_BLUE,
+                           COLOR_BASIC_RED,
+                           COLOR_BASIC_MAGENTA,
+                           COLOR_BASIC_GREEN,
+                           COLOR_BASIC_CYAN,
+                           COLOR_BASIC_YELLOW,
+                           COLOR_BASIC_WHITE
+                           ]
+        self.color_idx = 0
 
     def enter(self, game):
         frame = pygame.image.load(f'img/loader.gif')
-        frame = pygame.transform.scale(frame, (RESOLUTION[0], RESOLUTION[1]))
+        frame = pygame.transform.scale(frame, (SCALED_SCREEN_WIDTH, SCALED_SCREEN_HEIGHT))
         game.add_surface('intro', frame)
 
     def update(self, game):
         self.clock.tick()
         self.elaped_ms += self.clock.get_time()
-        game.screen.blit(game.get_surface('intro'), (0, 0))
-        if self.elaped_ms > 3000:
+        game.set_border_color(self.color_list[self.color_idx])
+        self.color_idx += 1
+        if self.color_idx >= len(self.color_list):
+            self.color_idx = 0
+
+        game.screen.blit(game.get_surface('intro'), (SCALED_SCREEN_OFFSET_X, SCALED_SCREEN_OFFSET_Y))
+        if self.elaped_ms > 3000 or SKIP_LOADER:
             game.change_state(MenuState())
 
     def exit(self, game):
         game.del_surface('intro')
-
