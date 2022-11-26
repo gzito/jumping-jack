@@ -56,16 +56,25 @@ class Game:
         self.score = 0
         self.highscore = 0
         self.hazards = 0
-        self.set_initial_hazard_value()
 
         self.font = None
 
         self.state = None
         self.new_state = None
 
+        self.__is_border_draw_enabled = True
+
+        self.set_initial_hazard_value()
+
     def set_initial_hazard_value(self):
         # level start from 0 (with no hazards) and runs until 20
-        self.hazards = 0
+        self.hazards = 10
+
+    def border_draw_enable(self, enabled):
+        self.__is_border_draw_enabled = enabled
+
+    def is_border_draw_enabled(self):
+        return self.__is_border_draw_enabled
 
     def load_resources(self):
         self.font = pygame.font.Font('fonts/zxspectr.ttf', int(8 * SCALE_FACTOR_X))
@@ -223,7 +232,8 @@ class Game:
 
             self.update()
 
-            self.draw_borders()
+            if self.is_border_draw_enabled():
+                self.draw_borders()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT or (event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE):
@@ -510,16 +520,18 @@ class LoaderState(GameState):
                            COLOR_BASIC_WHITE
                            ]
         self.color_idx = 0
+        self.m = color_flash.MulticolorBorderFlash(2)
 
     def enter(self, game):
         frame = pygame.image.load(f'img/loader.gif')
         frame = pygame.transform.scale(frame, (SCALED_SCREEN_WIDTH, SCALED_SCREEN_HEIGHT))
         game.add_surface('intro', frame)
+        game.border_draw_enable(False)
 
     def update(self, game):
         self.clock.tick()
         self.elaped_ms += self.clock.get_time()
-        game.set_border_color(self.color_list[self.color_idx])
+        # game.set_border_color(self.color_list[self.color_idx])
         self.color_idx += 1
         if self.color_idx >= len(self.color_list):
             self.color_idx = 0
@@ -528,5 +540,8 @@ class LoaderState(GameState):
         if self.elaped_ms > 3000 or SKIP_LOADER:
             game.change_state(MenuState())
 
+        self.m.update()
+
     def exit(self, game):
         game.del_surface('intro')
+        game.border_draw_enable(True)

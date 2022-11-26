@@ -22,7 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import pygame.gfxdraw
 from pygame.time import Clock
+
+import game
+from globals import *
 
 
 class ColorFlash:
@@ -60,7 +64,7 @@ class ColorFlash:
                     if self.__counter < self.__times:
                         self.__next_color_idx = 0
                     else:
-                        self.__next_color_idx = len(self.__colors)-1
+                        self.__next_color_idx = len(self.__colors) - 1
                 if self.__counter >= self.__times:
                     self.stop()
 
@@ -75,3 +79,62 @@ class ColorFlash:
         if self.__is_enabled:
             retval = self.__colors[self.__next_color_idx]
         return retval
+
+
+def clamp(x, step, xmin, xmax):
+    x += step
+    if x >= xmax:
+        x = xmin
+    return x
+
+
+class MulticolorBorderFlash:
+    def __init__(self, line_size):
+        self.color_list = [COLOR_BASIC_BLACK,
+                           COLOR_BASIC_BLUE,
+                           COLOR_BASIC_RED,
+                           COLOR_BASIC_MAGENTA,
+                           COLOR_BASIC_GREEN,
+                           COLOR_BASIC_CYAN,
+                           COLOR_BASIC_YELLOW,
+                           COLOR_BASIC_WHITE,
+                           COLOR_BRIGHT_BLACK,
+                           COLOR_BRIGHT_BLUE,
+                           COLOR_BRIGHT_RED,
+                           COLOR_BRIGHT_MAGENTA,
+                           COLOR_BRIGHT_GREEN,
+                           COLOR_BRIGHT_CYAN,
+                           COLOR_BRIGHT_YELLOW,
+                           COLOR_BRIGHT_WHITE]
+
+        self.color_idx = 0
+        self.line_size = line_size
+
+    def update(self):
+        c = self.color_idx
+        y = 0
+        while y < round(SCALED_SCREEN_OFFSET_Y):
+            pygame.gfxdraw.box(game.Game.instance().screen,
+                               (0, y, DISPLAY_WIDTH, zxh2h(self.line_size)),
+                               self.color_list[c])
+            c = clamp(c, 1, 0, len(self.color_list))
+            y += zxh2h(self.line_size)
+
+        while y < round(SCALED_BOTTOM_BORDER_Y):
+            pygame.gfxdraw.box(game.Game.instance().screen,
+                               (0, y, zxw2w(ZX_LEFT_BORDER_WIDTH), zxh2h(self.line_size)),
+                               self.color_list[c])
+            pygame.gfxdraw.box(game.Game.instance().screen,
+                               (SCALED_RIGHT_BORDER_X, y, zxw2w(ZX_RIGHT_BORDER_WIDTH), zxh2h(self.line_size)),
+                               self.color_list[c])
+            c = clamp(c, 1, 0, len(self.color_list))
+            y += zxh2h(self.line_size)
+
+        while y < round(DISPLAY_HEIGHT):
+            pygame.gfxdraw.box(game.Game.instance().screen,
+                               (0, y, DISPLAY_WIDTH, zxh2h(self.line_size)),
+                               self.color_list[c])
+            c = clamp(c, 1, 0, len(self.color_list))
+            y += zxh2h(self.line_size)
+
+        self.color_idx = clamp(c, 2, 0, len(self.color_list))
