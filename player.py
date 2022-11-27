@@ -72,7 +72,7 @@ class Player(game_objects.ZSprite):
         badjump_anim = game_objects.Animation2D(True)
         for num in range(1, 3):
             frame = game.Game.instance().get_surface(f'stunned{num}')
-            badjump_anim.add_frame(game_objects.AnimFrame2D(frame, 0.50))
+            badjump_anim.add_frame(game_objects.AnimFrame2D(frame, 0.05))
 
         # stunned animation
         stunned_anim = game_objects.Animation2D(True)
@@ -297,7 +297,7 @@ class HazardHitState(PlayerState):
 class BadJumpState(PlayerState):
     def __init__(self):
         super().__init__()
-        self.flash = ScreenFlash((FLASH_COLOR_FLOOR_HIT, BACKGROUND_COLOR), 200, 3)
+        self.flash = ScreenFlash((FLASH_COLOR_FLOOR_HIT, BACKGROUND_COLOR), 200, 2)
         game.Game.instance().get_sfx("crash").play()
 
     def enter(self, player):
