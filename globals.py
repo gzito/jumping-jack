@@ -129,7 +129,6 @@ LIVES = 6
 
 # sprites groups
 GROUP_BCKGRND = "bg"
-GROUP_HUD = "hud"
 GROUP_HAZARDS = "hazards"
 GROUP_PLAYER = "player"
 

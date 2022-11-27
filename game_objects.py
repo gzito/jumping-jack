@@ -91,7 +91,7 @@ class ZSprite(pygame.sprite.Sprite):
         if self.animation is not None:
             self.animation.update(args[0])
             self.image = self.animation.get_current_frame()
-        self.rect.update(self.x, self.y, self.rect.width, self.rect.height)
+        self.rect.update(round(self.x), round(self.y), self.rect.width, self.rect.height)
 
     def add_animation(self, name, animation):
         self.animations[name] = animation

@@ -53,8 +53,10 @@ class Player(game_objects.ZSprite):
         walk_anim_right = game_objects.Animation2D(True)
         walk_anim_left = game_objects.Animation2D(True)
         for num in range(1, 5):
-            walk_anim_right.add_frame(game_objects.AnimFrame2D(game.Game.instance().get_surface(f'walk_right{num}'), 0.05))
-            walk_anim_left.add_frame(game_objects.AnimFrame2D(game.Game.instance().get_surface(f'walk_left{num}'), 0.05))
+            walk_anim_right.add_frame(
+                game_objects.AnimFrame2D(game.Game.instance().get_surface(f'walk_right{num}'), 0.05))
+            walk_anim_left.add_frame(
+                game_objects.AnimFrame2D(game.Game.instance().get_surface(f'walk_left{num}'), 0.05))
         walk_anim_right.loop = True
         walk_anim_right.speed = 1
         walk_anim_left.loop = True
@@ -66,11 +68,11 @@ class Player(game_objects.ZSprite):
             frame = game.Game.instance().get_surface(f'jump{num}')
             jump_anim.add_frame(game_objects.AnimFrame2D(frame, 0.05))
 
-        # electrified animation
-        electrified_anim = game_objects.Animation2D(True)
+        # bad jump animation
+        badjump_anim = game_objects.Animation2D(True)
         for num in range(1, 3):
             frame = game.Game.instance().get_surface(f'stunned{num}')
-            electrified_anim.add_frame(game_objects.AnimFrame2D(frame, 0.50))
+            badjump_anim.add_frame(game_objects.AnimFrame2D(frame, 0.50))
 
         # stunned animation
         stunned_anim = game_objects.Animation2D(True)
@@ -83,7 +85,7 @@ class Player(game_objects.ZSprite):
         self.add_animation("walk_right", walk_anim_right)
         self.add_animation("walk_left", walk_anim_left)
         self.add_animation("jump", jump_anim)
-        self.add_animation("electrified", electrified_anim)
+        self.add_animation("badjump", badjump_anim)
         self.add_animation("stunned", stunned_anim)
 
         self.set_animation(hidle_anim)
@@ -135,9 +137,6 @@ class Player(game_objects.ZSprite):
 # Player states
 #
 class PlayerState:
-    def __init__(self):
-        super().__init__()
-
     def handle_input(self, player):
         pass
 
@@ -169,13 +168,12 @@ class HidleState(PlayerState):
             player.change_state(JumpingState())
 
     def update(self, player, *args, **kwargs):
-        if not CHEAT_HAZARD_IMMUNITY:
-            if pygame.sprite.spritecollideany(player, game.Game.instance().sprite_group[GROUP_HAZARDS]) is not None:
-                player.change_state(HazardHitState())
+        if not CHEAT_HAZARD_IMMUNITY and \
+                pygame.sprite.spritecollideany(player, game.Game.instance().sprite_group[GROUP_HAZARDS]) is not None:
+            player.change_state(HazardHitState())
 
-        if not CHEAT_FALL_IMMUNITY:
-            if player.has_gap_down():
-                player.change_state(FallingState())
+        if not CHEAT_FALL_IMMUNITY and player.has_gap_down():
+            player.change_state(FallingState())
 
     def exit(self, player):
         game.Game.instance().get_sfx("stand").stop()
@@ -207,13 +205,12 @@ class WalkingState(PlayerState):
         else:
             player.set_animation(player.animations["walk_left"])
 
-        if not CHEAT_HAZARD_IMMUNITY:
-            if pygame.sprite.spritecollideany(player, game.Game.instance().sprite_group[GROUP_HAZARDS]) is not None:
-                player.change_state(HazardHitState())
+        if not CHEAT_HAZARD_IMMUNITY and \
+                pygame.sprite.spritecollideany(player, game.Game.instance().sprite_group[GROUP_HAZARDS]) is not None:
+            player.change_state(HazardHitState())
 
-        if not CHEAT_FALL_IMMUNITY:
-            if player.has_gap_down():
-                player.change_state(FallingState())
+        if not CHEAT_FALL_IMMUNITY and player.has_gap_down():
+            player.change_state(FallingState())
 
     def exit(self, player):
         game.Game.instance().get_sfx("run").stop()
@@ -226,7 +223,7 @@ class JumpingState(PlayerState):
 
     def enter(self, player):
         player.set_animation(player.animations["jump"])
-        player.next_jump_y = game.Game.instance().floor_list[player.floor_idx].rect.y - SCALED_PLAYER_HEIGHT
+        player.next_jump_y = round(game.Game.instance().floor_list[player.floor_idx].rect.y - SCALED_PLAYER_HEIGHT)
         self.has_gap_up = player.has_gap_up()
         game.Game.instance().get_sfx("jump").play()
 
@@ -252,7 +249,7 @@ class JumpingState(PlayerState):
         else:
             if player.y <= game.Game.instance().floor_list[player.floor_idx].rect.y:
                 player.y = game.Game.instance().floor_list[player.floor_idx].rect.y
-                player.change_state(ElectricfiedState())
+                player.change_state(BadJumpState())
 
     def exit(self, player):
         game.Game.instance().get_sfx("jump").stop()
@@ -263,16 +260,16 @@ class FallingState(PlayerState):
         super().__init__()
 
     def enter(self, player):
-        player.next_fallen_y = player.y + SCALED_FLOOR_DISTANCE
+        player.next_fallen_y = round(player.y + SCALED_FLOOR_DISTANCE)
         game.Game.instance().get_sfx("fall").play()
 
     def update(self, player, dt):
         player.move(0, 5)
         if player.y >= player.next_fallen_y:
             player.y = player.next_fallen_y
-            player.next_fallen_y = player.y + SCALED_FLOOR_DISTANCE
+            player.next_fallen_y = round(player.y + SCALED_FLOOR_DISTANCE)
             player.floor_idx += 1
-            player.change_state(StunnedState())
+            player.change_state(StunnedState(0))
 
     def exit(self, player):
         game.Game.instance().get_sfx("fall").stop()
@@ -290,54 +287,61 @@ class HazardHitState(PlayerState):
     def update(self, player, dt):
         self.flash.update()
         if not self.flash.is_enabled():
-            player.change_state(StunnedState())
+            player.change_state(StunnedState(1))
 
     def exit(self, player):
         self.flash.stop()
         game.Game.instance().get_sfx("kill").stop()
 
 
-class ElectricfiedState(PlayerState):
+class BadJumpState(PlayerState):
     def __init__(self):
         super().__init__()
         self.flash = ScreenFlash((FLASH_COLOR_FLOOR_HIT, BACKGROUND_COLOR), 200, 3)
+        game.Game.instance().get_sfx("crash").play()
 
     def enter(self, player):
-        player.set_animation(player.animations["electrified"])
+        player.set_animation(player.animations["badjump"])
         self.flash.start()
 
     def exit(self, player):
         self.flash.stop()
+        game.Game.instance().get_sfx("crash").stop()
 
     def update(self, player, dt):
         self.flash.update()
         if player.get_animation().is_ended() and not self.flash.is_enabled():
             player.move(0, 8 * SCALE_FACTOR_Y)
-            player.change_state(StunnedState())
+            player.change_state(StunnedState(2))
 
 
 class StunnedState(PlayerState):
-    def __init__(self):
+    def __init__(self, stunned_multiplier=0):
         super().__init__()
+        # this can be: 1, 2 or 3
+        # - 0 Jack falls through gap
+        # - 1 Jack hits Hazard
+        # - 2 Bad jump or losing a life
+        self.stunned_multiplier = stunned_multiplier
+        self.clock = pygame.time.Clock()
+        self.current_time_ms = 0
 
     def enter(self, player):
         player.set_animation(player.animations["stunned"])
-        game.Game.instance().get_sfx('longstun').play()
-
-    def exit(self, player):
-        if not CHEAT_INFINITE_LIVES:
-            if player.floor_idx == 7:
-                game.Game().instance().decrement_lives()
-                if game.Game.instance().lives < 1:
-                    game.Game.instance().get_sfx('longstun').stop()
-                    game.Game.instance().get_sfx('lose').play()
-                    pygame.time.delay(2000)
-                    game.Game.instance().change_state(game.MenuState())
-        game.Game.instance().get_sfx('longstun').stop()
+        game.Game.instance().get_sfx('longstun').play(-1)
+        if player.floor_idx == 7 and not CHEAT_INFINITE_LIVES:
+            game.Game().instance().decrement_lives()
+            self.stunned_multiplier = 2
 
     def update(self, player, dt):
-        if player.has_gap_down():
+        self.current_time_ms += self.clock.tick()
+        if self.current_time_ms >= 1500 + (500 * self.stunned_multiplier) or player.has_gap_down():
             player.change_state(HidleState())
 
-        if player.get_animation().current_time > 1:
-            player.change_state(HidleState())
+    def exit(self, player):
+        if game.Game.instance().lives < 1:
+            game.Game.instance().get_sfx('longstun').stop()
+            game.Game.instance().get_sfx('lose').play()
+            pygame.time.delay(2000)
+            game.Game.instance().change_state(game.MenuState())
+        game.Game.instance().get_sfx('longstun').stop()

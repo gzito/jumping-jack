@@ -49,8 +49,9 @@ class Game:
         self.gap_list = []
         self.life_list = []
         self.hazard_list = []
-        self.sprite_group = {GROUP_BCKGRND: pygame.sprite.Group(), GROUP_HUD: pygame.sprite.Group(),
-                             GROUP_HAZARDS: pygame.sprite.Group(), GROUP_PLAYER: pygame.sprite.Group()}
+        self.sprite_group = {GROUP_BCKGRND: pygame.sprite.Group(),
+                             GROUP_HAZARDS: pygame.sprite.Group(),
+                             GROUP_PLAYER: pygame.sprite.Group()}
 
         self.lives = LIVES
         self.score = 0
@@ -122,6 +123,7 @@ class Game:
         self.add_sfx('lose', pygame.mixer.Sound('sfx/Lose.wav'))
         self.add_sfx('win', pygame.mixer.Sound('sfx/Win.wav'))
         self.add_sfx('longstun', pygame.mixer.Sound('sfx/LongStun.wav'))
+        self.add_sfx('crash', pygame.mixer.Sound('sfx/Crash.wav'))
 
     def add_surface(self, name, surface):
         self.__surfaces[name] = surface
@@ -155,23 +157,23 @@ class Game:
             self.floor_list.append(the_floor)
             self.sprite_group[GROUP_BCKGRND].add(the_floor)
 
-    def create_lives(self):
-        life_frame = self.get_surface("life")
-        for num in range(self.lives):
-            life = pygame.sprite.Sprite()
-            life.rect = pygame.rect.Rect(zxx2x(num * ZX_LIFE_WIDTH),
-                                         zxy2y(ZX_SCREEN_HEIGHT - ZX_LIFE_HEIGHT - 8),
-                                         life_frame.get_width(),
-                                         life_frame.get_height())
-            life.image = life_frame
-            self.life_list.append(life)
-            self.sprite_group[GROUP_HUD].add(life)
+    def increment_lives(self):
+        self.lives += 1
 
     def decrement_lives(self):
         self.lives -= 1
-        last_live = self.life_list[-1]
-        del self.life_list[-1]
-        self.sprite_group[GROUP_HUD].remove(last_live)
+
+    def draw_lives(self):
+        life_frame = self.get_surface("life")
+        for num in range(self.lives):
+            self.screen.blit(life_frame, (zxx2x(num * ZX_LIFE_WIDTH), zxy2y(ZX_SCREEN_HEIGHT - ZX_LIFE_HEIGHT - 8)))
+
+    def draw_score(self):
+        txt = f"HI{self.highscore:05d} SC{self.score:05d}"
+        font_surface = self.font.render(txt, False, SCORE_COLOR)
+        w = font_surface.get_width()
+        h = font_surface.get_height()
+        self.screen.blit(font_surface, (zxx2x(ZX_SCREEN_WIDTH) - w, zxy2y(ZX_SCREEN_HEIGHT - 8) - h))
 
     def draw_background(self):
         self.screen.fill(Game.instance().__bg_color,
@@ -297,9 +299,6 @@ class PlayingState(GameState):
                 if len(game.hazard_list) < MAX_HAZARDS:
                     hazard.Hazard.spawn_hazard(game.sprite_group[GROUP_HAZARDS])
 
-        # create lives
-        game.create_lives()
-
         # set background and border color
         game.set_bg_color(BACKGROUND_COLOR)
         game.set_border_color(BACKGROUND_COLOR)
@@ -314,15 +313,12 @@ class PlayingState(GameState):
         # draw floors and gaps
         game.sprite_group[GROUP_BCKGRND].draw(game.screen)
 
-        # draw score
-        txt = f"HI{Game.instance().highscore:05d} SC{Game.instance().score:05d}"
-        font_surface = game.font.render(txt, False, SCORE_COLOR)
-        w = font_surface.get_width()
-        h = font_surface.get_height()
-        game.screen.blit(font_surface, (zxx2x(ZX_SCREEN_WIDTH) - w, zxy2y(ZX_SCREEN_HEIGHT - 8) - h))
-
         # draw lives
-        game.sprite_group[GROUP_HUD].draw(game.screen)
+        game.draw_lives()
+
+        # draw score
+        game.draw_score()
+
         # draw hazards
         game.sprite_group[GROUP_HAZARDS].draw(game.screen)
         # draw jack
@@ -333,7 +329,6 @@ class PlayingState(GameState):
 
     def exit(self, game):
         game.sprite_group[GROUP_BCKGRND].empty()
-        game.sprite_group[GROUP_HUD].empty()
         game.sprite_group[GROUP_PLAYER].empty()
         game.sprite_group[GROUP_HAZARDS].empty()
         game.floor_list.clear()
@@ -383,6 +378,10 @@ class LevelUpState(GameState):
         self.rhyme_end = False
         self.fast_text = False
 
+        self.extra_life = False
+        self.extra_life_colours = [COLOR_BRIGHT_WHITE, COLOR_BRIGHT_MAGENTA]
+        self.color_flash = None
+
     def handle_input(self, game):
         key = pygame.key.get_pressed()
         if key[pygame.K_RETURN]:
@@ -392,6 +391,11 @@ class LevelUpState(GameState):
         self.clock = pygame.time.Clock()
         game.set_bg_color(COLOR_BASIC_YELLOW)
         game.set_border_color(COLOR_BASIC_YELLOW)
+
+        self.color_flash = color_flash.ColorFlash(self.extra_life_colours, 250, 6)
+        self.extra_life = self.next_hazard == 6 or self.next_hazard == 11 or self.next_hazard == 16
+        if self.extra_life:
+            game.increment_lives()
 
     def update(self, game):
         self.current_time += self.clock.tick()
@@ -434,7 +438,18 @@ class LevelUpState(GameState):
             font_surface = game.font.render(f'{txt}', False, COLOR_BASIC_BLUE)
             game.screen.blit(font_surface, (zxbx2x(0), zxby2y(18)))
 
-        if self.rhyme_end and (self.current_time - self.start_time > 2000):
+        if self.rhyme_end and self.extra_life:
+            if not self.color_flash.is_enabled():
+                self.color_flash.start()
+
+            self.color_flash.update()
+            box_color = self.color_flash.get_current_color() if self.color_flash.is_enabled() else COLOR_BRIGHT_MAGENTA
+            txt_color = COLOR_BRIGHT_WHITE if box_color == COLOR_BRIGHT_MAGENTA else COLOR_BRIGHT_MAGENTA
+            pygame.gfxdraw.box(game.screen, (zxbx2x(9), zxby2y(21), zxbw2w(14), zxbh2h(3)), box_color)
+            font_surface = game.font.render('EXTRA LIFE', False, txt_color)
+            game.screen.blit(font_surface, (zxbx2x(11), zxby2y(22)))
+
+        if not self.color_flash.is_enabled() and self.rhyme_end and (self.current_time - self.start_time > 2000):
             if game.hazards >= 20:
                 game.change_state(MenuState())
             else:
@@ -443,7 +458,8 @@ class LevelUpState(GameState):
             return
 
     def exit(self, game):
-        pass
+        self.extra_life = False
+        self.color_flash = None
 
 
 class MenuState(GameState):
