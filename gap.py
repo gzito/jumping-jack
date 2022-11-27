@@ -42,7 +42,7 @@ def spawn_gap(x, y, speed, floor_idx, grp):
 # spawn new gap at random location
 def spawn_random_gap(grp):
     if len(game.Game.instance().gap_list) < MAX_GAPS:
-        x = random.randint(int(SCALED_SCREEN_OFFSET_X), int(SCALED_RIGHT_BORDER_X))
+        x = random.randint(round(SCALED_SCREEN_OFFSET_X), round(SCALED_RIGHT_BORDER_X))
         floor_idx = random.randint(0, 7)
         y = game.Game.instance().floor_list[floor_idx].rect.y
         gap_dir = random.randint(0, 1)

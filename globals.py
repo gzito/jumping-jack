@@ -77,7 +77,7 @@ SCALED_LIFE_SIZE = (ZX_LIFE_SIZE[0] * SCALE_FACTOR_X, ZX_LIFE_SIZE[1] * SCALE_FA
 
 # floors
 FLOOR_WIDTH = ZX_SCREEN_WIDTH
-FLOOR_THICKNESS = 2
+FLOOR_THICKNESS = 3
 FLOOR_DISTANCE = 24
 SCALED_FLOOR_WIDTH = FLOOR_WIDTH * SCALE_FACTOR_X
 SCALED_FLOOR_THICKNESS = FLOOR_THICKNESS * SCALE_FACTOR_Y
@@ -115,7 +115,7 @@ COLOR_BRIGHT_CYAN = (0, 255, 255)
 COLOR_BRIGHT_YELLOW = (255, 255, 0)
 COLOR_BRIGHT_WHITE = (255, 255, 255)
 
-# colors
+# game elements colors
 BACKGROUND_COLOR = COLOR_BASIC_WHITE
 FLASH_COLOR_FLOOR_HIT = COLOR_BRIGHT_WHITE
 FLASH_COLOR_HAZARD_HIT = COLOR_BASIC_MAGENTA
@@ -123,9 +123,9 @@ FLOOR_COLOR = COLOR_BASIC_RED
 SCORE_COLOR = COLOR_BASIC_MAGENTA
 
 # miscellaneous
+LIVES = 6
 MAX_HAZARDS = 20
 MAX_GAPS = 8  # max 8 gaps - spawns 1 gaps every time the player gets up one floor
-LIVES = 6
 
 # sprites groups
 GROUP_BCKGRND = "bg"
@@ -172,3 +172,10 @@ def zxw2w(zx_w):
 
 def zxh2h(zx_h):
     return round(zx_h * SCALE_FACTOR_Y)
+
+
+def clamp(x, step, xmin, xmax):
+    x += step
+    if x >= xmax:
+        x = xmin
+    return x

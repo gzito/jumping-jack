@@ -29,9 +29,9 @@ from globals import *
 class Floor(pygame.sprite.Sprite):
     def __init__(self, i):
         super().__init__()
-        x = SCALED_SCREEN_OFFSET_X
-        y = SCALED_SCREEN_OFFSET_Y + (i * SCALED_FLOOR_DISTANCE)
+        x = round(SCALED_SCREEN_OFFSET_X)
+        y = round(SCALED_SCREEN_OFFSET_Y + (i * SCALED_FLOOR_DISTANCE))
         # print(f'floor {i}: {i * SCALED_FLOOR_DISTANCE}')
-        self.image = pygame.Surface((SCALED_FLOOR_WIDTH, SCALED_FLOOR_THICKNESS))
+        self.image = pygame.Surface((round(SCALED_FLOOR_WIDTH), round(SCALED_FLOOR_THICKNESS)))
         self.image.fill(FLOOR_COLOR)
-        self.rect = pygame.Rect(x, y, SCALED_FLOOR_WIDTH, SCALED_FLOOR_THICKNESS)
+        self.rect = pygame.Rect(x, y, round(SCALED_FLOOR_WIDTH), round(SCALED_FLOOR_THICKNESS))

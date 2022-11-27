@@ -40,31 +40,33 @@ class Game:
     def __init__(self):
         self.__bg_color = BACKGROUND_COLOR
         self.__border_color = BACKGROUND_COLOR
-        self.clock = pygame.time.Clock()
         self.__surfaces = {}
         self.__sfx = {}
+        self.__state = None
+        self.__new_state = None
+        self.__is_border_draw_enabled = True
+
+        self.clock = pygame.time.Clock()
         self.screen = pygame.display.get_surface()
+        self.font = None
 
         self.floor_list = []
         self.gap_list = []
-        self.life_list = []
         self.hazard_list = []
         self.sprite_group = {GROUP_BCKGRND: pygame.sprite.Group(),
                              GROUP_HAZARDS: pygame.sprite.Group(),
                              GROUP_PLAYER: pygame.sprite.Group()}
 
+        self.highscore = 0
         self.lives = LIVES
         self.score = 0
-        self.highscore = 0
         self.hazards = 0
 
-        self.font = None
+        self.set_initial_hazard_value()
 
-        self.state = None
-        self.new_state = None
-
-        self.__is_border_draw_enabled = True
-
+    def restart(self):
+        self.score = 0
+        self.lives = LIVES
         self.set_initial_hazard_value()
 
     def set_initial_hazard_value(self):
@@ -200,22 +202,22 @@ class Game:
                            self.__border_color)
 
     def update(self):
-        if self.new_state is not None:
-            self.state = self.new_state
-            self.new_state = None
-            self.state.enter(self)
+        if self.__new_state is not None:
+            self.__state = self.__new_state
+            self.__new_state = None
+            self.__state.enter(self)
 
-        if self.state is not None:
-            self.state.handle_input(self)
-            self.state.update(self)
+        if self.__state is not None:
+            self.__state.handle_input(self)
+            self.__state.update(self)
 
-        if self.new_state is not None:
-            self.state.exit(self)
+        if self.__new_state is not None:
+            self.__state.exit(self)
 
     def change_state(self, new_state):
-        if isinstance(new_state, type(self.state)):
+        if isinstance(new_state, type(self.__state)):
             return
-        self.new_state = new_state
+        self.__new_state = new_state
 
     # ===================================================================================================
     #
@@ -235,7 +237,7 @@ class Game:
             self.update()
 
             if self.is_border_draw_enabled():
-                self.draw_borders()
+               self.draw_borders()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT or (event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE):
@@ -333,7 +335,6 @@ class PlayingState(GameState):
         game.sprite_group[GROUP_HAZARDS].empty()
         game.floor_list.clear()
         game.gap_list.clear()
-        game.life_list.clear()
         game.hazard_list.clear()
 
 
@@ -483,7 +484,7 @@ class MenuState(GameState):
         key = pygame.key.get_pressed()
 
         if key[pygame.K_RETURN]:
-            game.set_initial_hazard_value()
+            game.restart()
             game.change_state(PlayingState())
 
     def update(self, game):
