@@ -116,12 +116,12 @@ class Player(game_objects.ZSprite):
         self.new_state = new_state
 
     def has_gap_up(self):
-        tollerance = 3 * SCALE_FACTOR_X
+        tolerance = 3 * SCALE_FACTOR_X
 
         for the_gap in game.Game.instance().gap_list:
             rect = the_gap.rect
             if abs(self.rect.y - rect.bottom) <= 7 * SCALE_FACTOR_Y:
-                if self.rect.x >= (rect.x - tollerance) and self.rect.right <= (rect.right + tollerance):
+                if self.rect.x >= (rect.x - tolerance) and self.rect.right <= (rect.right + tolerance):
                     return True
         return False
 
@@ -328,7 +328,7 @@ class StunnedState(PlayerState):
 
     def enter(self, player):
         player.set_animation(player.animations["stunned"])
-        game.Game.instance().get_sfx('longstun').play(-1)
+        game.Game.instance().get_sfx('stun').play(-1)
         if player.floor_idx == 7 and not CHEAT_INFINITE_LIVES:
             game.Game().instance().decrement_lives()
             self.stunned_multiplier = 2
@@ -340,8 +340,8 @@ class StunnedState(PlayerState):
 
     def exit(self, player):
         if game.Game.instance().lives < 1:
-            game.Game.instance().get_sfx('longstun').stop()
+            game.Game.instance().get_sfx('stun').stop()
             game.Game.instance().get_sfx('lose').play()
             pygame.time.delay(2000)
             game.Game.instance().change_state(game.MenuState())
-        game.Game.instance().get_sfx('longstun').stop()
+        game.Game.instance().get_sfx('stun').stop()

@@ -117,15 +117,15 @@ class Game:
                 self.add_surface(f'{hazard_name}{num}', frame)
 
         # sfx
-        self.add_sfx('stand', pygame.mixer.Sound('sfx/Stand.wav'))
-        self.add_sfx('run', pygame.mixer.Sound('sfx/Run.wav'))
-        self.add_sfx('jump', pygame.mixer.Sound('sfx/Jump.wav'))
-        self.add_sfx('kill', pygame.mixer.Sound('sfx/Kill.wav'))
-        self.add_sfx('fall', pygame.mixer.Sound('sfx/Fall.wav'))
-        self.add_sfx('lose', pygame.mixer.Sound('sfx/Lose.wav'))
-        self.add_sfx('win', pygame.mixer.Sound('sfx/Win.wav'))
-        self.add_sfx('longstun', pygame.mixer.Sound('sfx/LongStun.wav'))
-        self.add_sfx('crash', pygame.mixer.Sound('sfx/Crash.wav'))
+        self.add_sfx('stand', pygame.mixer.Sound('sfx/stand.wav'))
+        self.add_sfx('run', pygame.mixer.Sound('sfx/run.wav'))
+        self.add_sfx('jump', pygame.mixer.Sound('sfx/jump.wav'))
+        self.add_sfx('kill', pygame.mixer.Sound('sfx/kill.wav'))
+        self.add_sfx('fall', pygame.mixer.Sound('sfx/fall.wav'))
+        self.add_sfx('lose', pygame.mixer.Sound('sfx/lose.wav'))
+        self.add_sfx('win', pygame.mixer.Sound('sfx/win.wav'))
+        self.add_sfx('stun', pygame.mixer.Sound('sfx/stun.wav'))
+        self.add_sfx('crash', pygame.mixer.Sound('sfx/crash.wav'))
 
     def add_surface(self, name, surface):
         self.__surfaces[name] = surface
@@ -237,7 +237,7 @@ class Game:
             self.update()
 
             if self.is_border_draw_enabled():
-               self.draw_borders()
+                self.draw_borders()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT or (event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE):
@@ -555,7 +555,7 @@ class LoaderState(GameState):
 
         game.screen.blit(game.get_surface('intro'), (SCALED_SCREEN_OFFSET_X, SCALED_SCREEN_OFFSET_Y))
         if self.elaped_ms > 3000 or SKIP_LOADER:
-            game.change_state(MenuState())
+            game.change_state(PlayingState())
 
         self.m.update()
 
