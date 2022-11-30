@@ -67,7 +67,7 @@ class Hazard(game_objects.ZSprite):
         super().update(*args, **kwargs)
 
     def wrap(self):
-        if self.x <= SCALED_SCREEN_OFFSET_X:
+        if self.x <= SCALED_SCREEN_OFFSET_X - SCALED_GAP_WIDTH:
             self.x = SCALED_RIGHT_BORDER_X
             self.y = self.y - SCALED_FLOOR_DISTANCE
             if self.y < zxy2y(-ZX_HAZARD_HEIGHT):
